@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriverConnect — Own Your Ride Business</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .grad-text {
+      background: linear-gradient(135deg, #F59E0B, #EF4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+    .step-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #F59E0B22, #F59E0B44);
+      font-size: 22px; flex-shrink: 0;
+    }
+    .fade-in { animation: fadeIn .5s ease both; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body class="bg-white">
+
+<!-- ── Nav ─────────────────────────────────────────────────────── -->
+<nav class="border-b border-slate-100 px-5 py-4 flex items-center justify-between max-w-6xl mx-auto">
+  <div class="flex items-center gap-2">
+    <div style="width:34px;height:34px;border-radius:10px;background:#F59E0B;display:flex;align-items:center;justify-content:center">
+      <svg style="width:18px;height:18px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <span style="font-size:17px;font-weight:800;color:#0f172a;letter-spacing:-.3px">DriverConnect</span>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="login.html" style="font-size:14px;font-weight:500;color:#475569;text-decoration:none">Sign in</a>
+    <a href="login.html?mode=signup"
+       style="font-size:14px;font-weight:600;background:#0f172a;color:#fff;padding:8px 18px;border-radius:10px;text-decoration:none">
+      Get started free →
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ────────────────────────────────────────────────────── -->
+<section class="max-w-5xl mx-auto px-5 pt-20 pb-24 text-center fade-in">
+  <div style="display:inline-block;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:600;padding:5px 14px;border-radius:999px;margin-bottom:20px;border:1px solid #FDE68A">
+    🚗 Built for independent drivers — not platforms
+  </div>
+  <h1 style="font-size:clamp(36px,6vw,62px);font-weight:900;color:#0f172a;line-height:1.08;letter-spacing:-.5px;margin-bottom:20px">
+    Your rides.<br>
+    <span class="grad-text">Your customers. Your income.</span>
+  </h1>
+  <p style="font-size:18px;color:#64748b;max-width:520px;margin:0 auto 36px;line-height:1.6">
+    Get a personal booking page in 2 minutes. Riders book directly with you —
+    no Uber fees, no surge, no middleman.
+  </p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="login.html?mode=signup"
+       style="font-size:15px;font-weight:700;background:#F59E0B;color:#fff;padding:14px 28px;border-radius:12px;text-decoration:none;box-shadow:0 4px 14px rgba(245,158,11,.35)">
+      Create your driver page — free →
+    </a>
+    <a href="login.html"
+       style="font-size:15px;font-weight:600;background:#f1f5f9;color:#334155;padding:14px 28px;border-radius:12px;text-decoration:none">
+      Sign in
+    </a>
+  </div>
+  <p style="margin-top:14px;font-size:13px;color:#94a3b8">No credit card · No platform approval · Works tonight</p>
+</section>
+
+<!-- ── Demo preview ─────────────────────────────────────────────── -->
+<section style="background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:48px 20px">
+  <div class="max-w-3xl mx-auto" style="text-align:center;margin-bottom:32px">
+    <p style="font-size:13px;font-weight:600;color:#F59E0B;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">How it works</p>
+    <h2 style="font-size:28px;font-weight:800;color:#0f172a">Up and running in 3 steps</h2>
+  </div>
+  <div style="max-width:800px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+
+    <div style="background:#fff;border-radius:18px;padding:24px;border:1px solid #e2e8f0">
+      <div class="step-icon" style="margin-bottom:16px">⚡</div>
+      <div style="font-size:12px;font-weight:700;color:#F59E0B;letter-spacing:.06em;margin-bottom:6px">STEP 1</div>
+      <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">Build your profile</h3>
+      <p style="font-size:14px;color:#64748b;line-height:1.55">Add your name, vehicle, services, and payment links. Takes under 2 minutes.</p>
+    </div>
+
+    <div style="background:#fff;border-radius:18px;padding:24px;border:1px solid #e2e8f0">
+      <div class="step-icon" style="margin-bottom:16px">🔗</div>
+      <div style="font-size:12px;font-weight:700;color:#F59E0B;letter-spacing:.06em;margin-bottom:6px">STEP 2</div>
+      <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">Share your link</h3>
+      <p style="font-size:14px;color:#64748b;line-height:1.55">Text riders your personal booking URL. They see your profile and request a ride — no app download needed.</p>
+    </div>
+
+    <div style="background:#fff;border-radius:18px;padding:24px;border:1px solid #e2e8f0">
+      <div class="step-icon" style="margin-bottom:16px">💰</div>
+      <div style="font-size:12px;font-weight:700;color:#F59E0B;letter-spacing:.06em;margin-bottom:6px">STEP 3</div>
+      <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">Manage your rides</h3>
+      <p style="font-size:14px;color:#64748b;line-height:1.55">Booking requests appear in your dashboard. Confirm or decline with one tap. Get paid your way.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Feature highlights ────────────────────────────────────────── -->
+<section style="max-width:720px;margin:0 auto;padding:64px 20px">
+  <div style="text-align:center;margin-bottom:40px">
+    <h2 style="font-size:26px;font-weight:800;color:#0f172a">Everything you need. Nothing you don't.</h2>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px;background:#f8fafc;border-radius:14px">
+      <div style="font-size:24px;flex-shrink:0">📋</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:3px">Your own CRM</div>
+        <div style="font-size:14px;color:#64748b;line-height:1.5">Every booking saves to your dashboard. See your riders' history, notes, and preferences in one place.</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px;background:#f8fafc;border-radius:14px">
+      <div style="font-size:24px;flex-shrink:0">💬</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:3px">WhatsApp notifications</div>
+        <div style="font-size:14px;color:#64748b;line-height:1.5">Booking requests land in your WhatsApp instantly — no app to check, no new habits to build.</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px;background:#f8fafc;border-radius:14px">
+      <div style="font-size:24px;flex-shrink:0">🎨</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:3px">Branded booking page</div>
+        <div style="font-size:14px;color:#64748b;line-height:1.5">Your name, your colors, your brand. Riders see a professional page — not a generic form.</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px;background:#f8fafc;border-radius:14px">
+      <div style="font-size:24px;flex-shrink:0">💸</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:3px">You keep 100%</div>
+        <div style="font-size:14px;color:#64748b;line-height:1.5">No platform fees. Display your Venmo, CashApp, or Zelle — payment goes straight to you.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ──────────────────────────────────────────────────────── -->
+<section style="background:linear-gradient(135deg,#0f172a,#1e293b);text-align:center;padding:64px 20px">
+  <h2 style="font-size:28px;font-weight:800;color:#fff;margin-bottom:12px">Ready to own your ride business?</h2>
+  <p style="font-size:16px;color:#94a3b8;margin-bottom:28px">Free to use. Set up in under 5 minutes.</p>
+  <a href="login.html?mode=signup"
+     style="font-size:15px;font-weight:700;background:#F59E0B;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;display:inline-block;box-shadow:0 4px 18px rgba(245,158,11,.4)">
+    Create your driver page →
+  </a>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer style="text-align:center;padding:28px 20px;border-top:1px solid #f1f5f9">
+  <p style="font-size:13px;color:#94a3b8">
+    <strong style="color:#64748b">DriverConnect</strong> · Built for independent drivers
+  </p>
+</footer>
+
+<!-- Redirect logged-in users straight to dashboard -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+  auth.onAuthStateChanged(user => {
+    if (user) window.location.href = 'dashboard.html';
+  });
+</script>
+
+</body>
+</html>

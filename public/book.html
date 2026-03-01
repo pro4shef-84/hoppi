@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Ride</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    :root { --ac: #F59E0B; --ac-d: #D97706; }
+
+    .input-f {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 11px 14px; font-size: 14px; color: #0f172a;
+      background: #fff; transition: border-color .15s; box-sizing: border-box;
+    }
+    .input-f:focus { outline: none; border-color: var(--ac); box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+    .input-f::placeholder { color: #94a3b8; }
+
+    .btn-book {
+      width: 100%; padding: 15px; border-radius: 12px;
+      background: var(--ac); color: #fff; font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; transition: background .15s;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    }
+    .btn-book:hover { background: var(--ac-d); }
+
+    .service-tag {
+      display: inline-flex; align-items: center;
+      padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 500;
+      background: rgba(255,255,255,.18); color: #fff; margin: 3px;
+      backdrop-filter: blur(4px);
+    }
+
+    .pay-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f8fafc; border-radius: 12px; padding: 12px 16px;
+    }
+
+    .avatar-grad { background: linear-gradient(135deg, var(--ac), var(--ac-d)); }
+
+    .fade-in { animation: fi .35s ease both; }
+    @keyframes fi { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    #loading-screen, #error-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #f8fafc; z-index: 200; text-align: center; padding: 20px;
+    }
+  </style>
+</head>
+<body style="background:#f8fafc;min-height:100vh">
+
+<!-- Loading -->
+<div id="loading-screen">
+  <div style="width:44px;height:44px;border-radius:12px;background:#F59E0B;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+    <svg style="width:24px;height:24px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+    </svg>
+  </div>
+  <div style="font-size:14px;color:#94a3b8">Loading driver profile…</div>
+</div>
+
+<!-- Error -->
+<div id="error-screen" style="display:none">
+  <div style="font-size:48px;margin-bottom:16px">🚫</div>
+  <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:8px">Driver not found</h2>
+  <p style="font-size:14px;color:#64748b;max-width:300px">This booking link may be invalid or the driver may have removed their profile.</p>
+  <a href="index.html" style="margin-top:24px;font-size:14px;font-weight:600;color:#F59E0B;text-decoration:none">← Back to DriverConnect</a>
+</div>
+
+<!-- Main content (hidden until profile loads) -->
+<div id="page" style="display:none;min-height:100vh">
+
+  <!-- ── Driver Hero ──────────────────────────────────────────────── -->
+  <div id="hero" style="background:#0f172a;text-align:center;padding:40px 20px">
+    <div id="avatar"
+      class="avatar-grad"
+      style="width:84px;height:84px;border-radius:50%;margin:0 auto 16px;
+             display:flex;align-items:center;justify-content:center;
+             font-size:28px;font-weight:800;color:#fff;
+             border:4px solid rgba(255,255,255,.18);overflow:hidden">
+    </div>
+    <h1 id="biz-name"   style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-.3px"></h1>
+    <p  id="drv-name"   style="font-size:13px;color:#94a3b8;margin-top:3px"></p>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:8px">
+      <span id="city-el"    style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
+        <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span id="city-txt"></span>
+      </span>
+      <span id="veh-el"     style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
+        <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l3 1h4l3-1zM13 8h5l2 5"/></svg>
+        <span id="veh-txt"></span>
+      </span>
+    </div>
+    <p id="tagline-el" style="font-size:14px;color:#cbd5e1;margin-top:12px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.5"></p>
+    <div id="services-el" style="margin-top:14px"></div>
+  </div>
+
+  <!-- ── Main Content ─────────────────────────────────────────────── -->
+  <div style="max-width:480px;margin:0 auto;padding:24px 16px 60px">
+
+    <!-- Booking form -->
+    <div id="form-wrap" class="fade-in">
+      <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:18px">Request a Ride</h2>
+      <form id="book-form" novalidate style="display:flex;flex-direction:column;gap:14px">
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Pickup Location *</label>
+          <input id="f-pickup" type="text" class="input-f" placeholder="Full address or landmark" required>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Drop-off Location *</label>
+          <input id="f-dropoff" type="text" class="input-f" placeholder="Destination address" required>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Date *</label>
+            <input id="f-date" type="date" class="input-f" required>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Time *</label>
+            <input id="f-time" type="time" class="input-f" required>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Passengers</label>
+            <select id="f-pax" class="input-f" style="cursor:pointer">
+              <option value="1 passenger">1 passenger</option>
+              <option value="2 passengers">2 passengers</option>
+              <option value="3 passengers">3 passengers</option>
+              <option value="4 passengers">4 passengers</option>
+              <option value="5+ passengers">5+ passengers</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Luggage</label>
+            <select id="f-luggage" class="input-f" style="cursor:pointer">
+              <option value="No luggage">No luggage</option>
+              <option value="Carry-on only">Carry-on only</option>
+              <option value="1–2 checked bags">1–2 checked bags</option>
+              <option value="3+ bags / heavy">3+ bags / heavy</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Your Name *</label>
+          <input id="f-name" type="text" class="input-f" placeholder="Full name" required>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Your Phone Number *</label>
+          <input id="f-phone" type="tel" class="input-f" placeholder="+1 (555) 000-0000" required>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Special Requests <span style="font-weight:400;color:#94a3b8">(optional)</span></label>
+          <textarea id="f-notes" rows="2" class="input-f" style="resize:none" placeholder="Flight number, accessibility needs, quiet ride preference…"></textarea>
+        </div>
+
+        <button type="submit" class="btn-book" style="margin-top:4px">
+          <svg style="width:19px;height:19px;flex-shrink:0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Send Ride Request via WhatsApp
+        </button>
+        <p style="text-align:center;font-size:12px;color:#94a3b8">Your request opens WhatsApp — the driver will reply to confirm.</p>
+
+      </form>
+    </div>
+
+    <!-- Success state -->
+    <div id="success-wrap" style="display:none;text-align:center;padding:48px 16px" class="fade-in">
+      <div class="avatar-grad"
+        style="width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg style="width:34px;height:34px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <h2 style="font-size:22px;font-weight:800;color:#0f172a">Request Sent!</h2>
+      <p style="font-size:14px;color:#64748b;margin-top:8px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.5">
+        The driver received your request and will reply on WhatsApp to confirm. Bookmark this page to book again.
+      </p>
+      <button onclick="resetForm()"
+        style="margin-top:24px;background:var(--ac);color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer">
+        Book Another Ride
+      </button>
+    </div>
+
+    <!-- Payment section -->
+    <div id="pay-section" style="margin-top:28px;border-top:1px solid #e2e8f0;padding-top:24px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:12px">Payment Options</div>
+      <div id="pay-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:24px 16px;border-top:1px solid #f1f5f9">
+    <p style="font-size:12px;color:#94a3b8">Powered by <a href="index.html" style="font-weight:600;color:#64748b;text-decoration:none">DriverConnect</a></p>
+    <a href="login.html?mode=signup" style="font-size:12px;color:#cbd5e1;display:inline-block;margin-top:6px;text-decoration:none"
+       onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#cbd5e1'">
+      Driver? Create your free booking page →
+    </a>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+
+const driverId = new URLSearchParams(location.search).get('d');
+
+if (!driverId) {
+  showError();
+} else {
+  loadDriver(driverId);
+}
+
+let driverProfile = null;
+
+// ── Load driver from Firestore ─────────────────────────────────────
+async function loadDriver(uid) {
+  try {
+    const snap = await db.collection('drivers').doc(uid).get();
+    if (!snap.exists) { showError(); return; }
+
+    driverProfile = snap.data();
+    renderProfile(driverProfile);
+
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('page').style.display = 'block';
+    document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+
+  } catch (err) {
+    console.error(err);
+    showError();
+  }
+}
+
+function showError() {
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('error-screen').style.display  = 'flex';
+}
+
+// ── Render driver profile into the hero ───────────────────────────
+function renderProfile(d) {
+  // Accent colour
+  const color  = d.accentColor     || '#F59E0B';
+  const colorD = d.accentColorDark || '#D97706';
+  document.documentElement.style.setProperty('--ac',   color);
+  document.documentElement.style.setProperty('--ac-d', colorD);
+  document.title = `Book with ${d.businessName || d.name}`;
+
+  // Avatar
+  const avatarEl = document.getElementById('avatar');
+  if (d.logoUrl) {
+    const img = document.createElement('img');
+    img.src   = d.logoUrl;
+    img.alt   = d.businessName || '';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = () => {
+      avatarEl.removeChild(img);
+      avatarEl.textContent = initials(d.businessName || d.name);
+      avatarEl.classList.add('avatar-grad');
+      avatarEl.style.background = '';
+    };
+    avatarEl.style.background = 'none';
+    avatarEl.classList.remove('avatar-grad');
+    avatarEl.appendChild(img);
+  } else {
+    avatarEl.textContent = initials(d.businessName || d.name || '?');
+  }
+
+  document.getElementById('biz-name').textContent  = d.businessName || d.name || '';
+  document.getElementById('drv-name').textContent  = d.name ? `Driven by ${d.name}` : '';
+  document.getElementById('city-txt').textContent  = d.city    || '';
+  document.getElementById('veh-txt').textContent   = d.vehicle || '';
+  document.getElementById('tagline-el').textContent = d.tagline || '';
+
+  // Services
+  const svcEl = document.getElementById('services-el');
+  (d.services || []).forEach(s => {
+    const span = document.createElement('span');
+    span.className = 'service-tag';
+    span.textContent = s;
+    svcEl.appendChild(span);
+  });
+
+  // Payment
+  const payEl  = document.getElementById('pay-rows');
+  let hasPay   = false;
+  const payOpts = [
+    { label: 'Venmo',   val: d.venmo,   prefix: '@', href: d.venmo   ? `https://venmo.com/${d.venmo}`   : null },
+    { label: 'CashApp', val: d.cashapp, prefix: '$', href: d.cashapp ? `https://cash.app/$${d.cashapp}` : null },
+    { label: 'Zelle',   val: d.zelle,   prefix: '',  href: null },
+  ];
+  payOpts.forEach(opt => {
+    if (!opt.val) return;
+    hasPay = true;
+    const row = document.createElement('div');
+    row.className = 'pay-row';
+    row.innerHTML = `
+      <span style="font-size:14px;font-weight:500;color:#475569">${opt.label}</span>
+      ${opt.href
+        ? `<a href="${opt.href}" target="_blank" style="font-size:14px;font-weight:700;color:#0f172a;text-decoration:none">${opt.prefix}${opt.val}</a>`
+        : `<span style="font-size:14px;font-weight:700;color:#0f172a">${opt.prefix}${opt.val}</span>`}
+    `;
+    payEl.appendChild(row);
+  });
+  if (!hasPay) document.getElementById('pay-section').style.display = 'none';
+}
+
+// ── Form submit ────────────────────────────────────────────────────
+document.getElementById('book-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const pickup     = document.getElementById('f-pickup').value.trim();
+  const dropoff    = document.getElementById('f-dropoff').value.trim();
+  const date       = document.getElementById('f-date').value;
+  const time       = document.getElementById('f-time').value;
+  const passengers = document.getElementById('f-pax').value;
+  const luggage    = document.getElementById('f-luggage').value;
+  const riderName  = document.getElementById('f-name').value.trim();
+  const riderPhone = document.getElementById('f-phone').value.trim();
+  const notes      = document.getElementById('f-notes').value.trim();
+
+  if (!pickup || !dropoff || !date || !time || !riderName || !riderPhone) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  const submitBtn = this.querySelector('button[type=submit]');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span>Sending…</span>';
+
+  // 1️⃣  Save to Firestore (driver sees it in dashboard)
+  try {
+    await db.collection('rideRequests').add({
+      driverId,
+      riderName,
+      riderPhone,
+      pickup,
+      dropoff,
+      date,
+      time,
+      passengers,
+      luggage,
+      notes,
+      status:    'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('Firestore save error:', err);
+    // Don't block the WhatsApp send even if Firestore fails
+  }
+
+  // 2️⃣  Open WhatsApp for immediate notification
+  const bizName = driverProfile?.businessName || driverProfile?.name || 'Driver';
+  const msg =
+    `🚗 *New Ride Request — ${bizName}*\n\n` +
+    `*Rider:* ${riderName}\n` +
+    `*Phone:* ${riderPhone}\n\n` +
+    `📍 *Pickup:* ${pickup}\n` +
+    `🏁 *Drop-off:* ${dropoff}\n` +
+    `📅 *Date:* ${fmtDate(date)}\n` +
+    `⏰ *Time:* ${fmtTime(time)}\n` +
+    `👥 *Passengers:* ${passengers}\n` +
+    `🧳 *Luggage:* ${luggage}` +
+    (notes ? `\n📝 *Notes:* ${notes}` : '') +
+    `\n\n_Sent via DriverConnect_`;
+
+  if (driverProfile?.phone) {
+    openWhatsApp(driverProfile.phone, msg);
+  }
+
+  // 3️⃣  Show success
+  document.getElementById('form-wrap').style.display    = 'none';
+  document.getElementById('success-wrap').style.display = 'block';
+  submitBtn.disabled = false;
+});
+
+function resetForm() {
+  document.getElementById('book-form').reset();
+  document.getElementById('success-wrap').style.display = 'none';
+  document.getElementById('form-wrap').style.display    = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+</script>
+</body>
+</html>

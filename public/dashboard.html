@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriverConnect — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    :root { --ac: #F59E0B; --ac-d: #D97706; }
+    .ac-bg   { background-color: var(--ac) !important; }
+    .ac-text { color: var(--ac) !important; }
+
+    .input-f {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 10px 14px; font-size: 14px; color: #0f172a;
+      background: #fff; transition: border-color .15s; box-sizing: border-box;
+    }
+    .input-f:focus { outline: none; border-color: var(--ac); box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+    .input-f::placeholder { color: #94a3b8; }
+
+    .btn-save {
+      background: var(--ac); color: #fff; border: none; cursor: pointer;
+      padding: 12px 28px; border-radius: 12px; font-size: 15px; font-weight: 700;
+      transition: background .15s;
+    }
+    .btn-save:hover   { background: var(--ac-d); }
+    .btn-save:disabled { opacity: .55; cursor: not-allowed; }
+
+    .tab-btn {
+      padding: 9px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; transition: all .15s;
+    }
+    .tab-btn.active  { background: var(--ac); color: #fff; }
+    .tab-btn.inactive { background: transparent; color: #64748b; }
+    .tab-btn.inactive:hover { background: #f1f5f9; }
+
+    .svc-check { accent-color: var(--ac); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .svc-label { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background .12s; }
+    .svc-label:hover { background: #f8fafc; }
+
+    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .12s, border-color .12s; }
+    .color-dot:hover  { transform: scale(1.15); }
+    .color-dot.chosen { border-color: #0f172a; transform: scale(1.1); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    }
+    .pill-pending   { background: #FEF3C7; color: #92400E; }
+    .pill-confirmed { background: #D1FAE5; color: #065F46; }
+    .pill-declined  { background: #FEE2E2; color: #991B1B; }
+    .pill-completed { background: #E2E8F0; color: #475569; }
+
+    .req-card {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 16px;
+      padding: 18px; transition: box-shadow .15s;
+    }
+    .req-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.07); }
+    .req-card.border-pending   { border-left: 4px solid #F59E0B; }
+    .req-card.border-confirmed { border-left: 4px solid #10B981; }
+    .req-card.border-declined  { border-left: 4px solid #EF4444; }
+    .req-card.border-completed { border-left: 4px solid #94a3b8; }
+
+    .action-btn {
+      padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      border: none; cursor: pointer; transition: opacity .15s;
+    }
+    .action-btn:hover { opacity: .85; }
+
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
+
+    .fade-in { animation: fi .3s ease both; }
+    @keyframes fi { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    #loading-overlay {
+      position: fixed; inset: 0; background: #fff;
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+  </style>
+</head>
+<body style="background:#f8fafc;min-height:100vh">
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div style="text-align:center">
+    <div style="width:40px;height:40px;border-radius:12px;background:#F59E0B;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <svg style="width:22px;height:22px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <div style="font-size:14px;color:#94a3b8">Loading your dashboard…</div>
+  </div>
+</div>
+
+<!-- ── Top Nav ─────────────────────────────────────────────────── -->
+<nav style="background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:50">
+  <div style="max-width:900px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px">
+    <!-- Logo -->
+    <a href="index.html" style="display:flex;align-items:center;gap:7px;text-decoration:none">
+      <div style="width:30px;height:30px;border-radius:9px;background:#F59E0B;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg style="width:16px;height:16px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <span style="font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.3px">DriverConnect</span>
+    </a>
+    <span style="color:#e2e8f0;margin:0 4px">|</span>
+    <span id="nav-biz-name" style="font-size:14px;font-weight:600;color:#475569;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+
+    <!-- Right actions -->
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <a id="nav-view-page" href="#" target="_blank"
+         style="font-size:13px;font-weight:600;color:#475569;text-decoration:none;padding:7px 14px;border:1.5px solid #e2e8f0;border-radius:9px;display:flex;align-items:center;gap:5px;transition:background .12s"
+         onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+        <span class="hidden sm:inline">My Page</span>
+      </a>
+      <button onclick="signOut()"
+        style="font-size:13px;font-weight:600;color:#64748b;background:transparent;border:none;cursor:pointer;padding:7px 12px;border-radius:9px;transition:background .12s"
+        onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+        Sign out
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div style="max-width:900px;margin:0 auto;padding:24px 16px 60px" id="main-content">
+
+  <!-- ── Booking Link Banner ──────────────────────────────────────── -->
+  <div id="link-banner" style="background:#0f172a;border-radius:18px;padding:20px 22px;margin-bottom:24px;display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#F59E0B;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">Your Booking Link</div>
+        <div style="font-size:13px;color:#94a3b8;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="link-display"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button id="copy-link-btn" onclick="copyBookingLink()"
+          style="font-size:13px;font-weight:600;background:#F59E0B;color:#fff;padding:8px 16px;border-radius:9px;border:none;cursor:pointer">
+          Copy Link
+        </button>
+        <button onclick="shareOnWhatsApp()"
+          style="font-size:13px;font-weight:600;background:#25D366;color:#fff;padding:8px 14px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px">
+          <svg style="width:14px;height:14px;flex-shrink:0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Profile incomplete prompt ───────────────────────────────── -->
+  <div id="setup-prompt" style="background:#FFF7ED;border:1.5px solid #FDE68A;border-radius:16px;padding:18px 20px;margin-bottom:24px;display:none;align-items:center;gap:14px">
+    <div style="font-size:24px;flex-shrink:0">👋</div>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#92400E">Complete your profile to get your booking link</div>
+      <div style="font-size:13px;color:#B45309;margin-top:3px">Fill in your details below and click Save — your unique link will appear at the top.</div>
+    </div>
+  </div>
+
+  <!-- ── Tabs ────────────────────────────────────────────────────── -->
+  <div style="display:flex;gap:6px;background:#f1f5f9;border-radius:14px;padding:5px;margin-bottom:24px;width:fit-content">
+    <button class="tab-btn active" id="tab-profile"  onclick="showTab('profile')">📋 My Profile</button>
+    <button class="tab-btn inactive" id="tab-requests" onclick="showTab('requests')">
+      🗓 Ride Requests
+      <span id="pending-badge" style="display:none;background:#EF4444;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:5px"></span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       PROFILE TAB
+  ════════════════════════════════════════════════════ -->
+  <div id="profile-tab" class="fade-in">
+
+    <div style="background:#fff;border-radius:20px;border:1px solid #e2e8f0;padding:24px 28px">
+
+      <!-- Toast -->
+      <div id="save-toast" style="display:none;background:#D1FAE5;color:#065F46;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;margin-bottom:20px">
+        ✓ Profile saved! Your booking link is now live.
+      </div>
+
+      <form id="profile-form" onsubmit="saveProfile(event)" style="display:flex;flex-direction:column;gap:28px">
+
+        <!-- Identity -->
+        <div>
+          <div class="section-label">Identity</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Driver Name *</label>
+              <input type="text" id="p-name" class="input-f" placeholder="e.g. Marcus" required>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Business / Brand Name *</label>
+              <input type="text" id="p-biz" class="input-f" placeholder="e.g. Marcus Rides" required>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">City *</label>
+              <input type="text" id="p-city" class="input-f" placeholder="e.g. Denver, CO" required>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:8px">Business Logo <span style="font-weight:400;color:#94a3b8">(optional)</span></label>
+              <!-- Logo upload UI -->
+              <div style="display:flex;align-items:center;gap:14px">
+                <!-- Circular preview -->
+                <div id="logo-preview-wrap" style="width:68px;height:68px;border-radius:50%;border:2px dashed #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;transition:border-color .15s" onclick="document.getElementById('logo-file-input').click()" title="Click to upload logo">
+                  <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+                  <svg id="logo-preview-icon" style="width:26px;height:26px;color:#cbd5e1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <!-- Upload button + progress -->
+                <div style="flex:1">
+                  <input type="file" id="logo-file-input" accept="image/*" style="display:none" onchange="handleLogoFile(this)">
+                  <button type="button" onclick="document.getElementById('logo-file-input').click()"
+                    style="font-size:13px;font-weight:600;color:#475569;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 16px;cursor:pointer;transition:background .12s"
+                    onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                    📁 Choose Image
+                  </button>
+                  <div style="font-size:11px;color:#94a3b8;margin-top:5px">PNG, JPG, GIF · Max 2 MB</div>
+                  <!-- Progress bar -->
+                  <div id="logo-progress-wrap" style="display:none;margin-top:8px">
+                    <div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">
+                      <div id="logo-progress-bar" style="height:100%;background:var(--ac);width:0%;transition:width .2s"></div>
+                    </div>
+                    <div id="logo-progress-text" style="font-size:11px;color:#64748b;margin-top:4px">Uploading…</div>
+                  </div>
+                  <!-- Remove button -->
+                  <button type="button" id="logo-remove-btn" onclick="removeLogo()" style="display:none;font-size:12px;color:#EF4444;background:none;border:none;cursor:pointer;margin-top:6px;padding:0">✕ Remove logo</button>
+                </div>
+              </div>
+              <input type="hidden" id="p-logo" value="">
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Tagline <span style="font-weight:400;color:#94a3b8">(optional)</span></label>
+            <input type="text" id="p-tagline" class="input-f" placeholder="e.g. Airport specialist — always on time" maxlength="110">
+          </div>
+        </div>
+
+        <!-- Vehicle -->
+        <div>
+          <div class="section-label">Vehicle</div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Vehicle Description *</label>
+            <input type="text" id="p-vehicle" class="input-f" placeholder="e.g. Black Tesla Model 3 — 4 passengers, USB charging" required>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <div>
+          <div class="section-label">Services Offered</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="✈️ Airport Runs" checked><span style="font-size:14px;font-weight:500;color:#1e293b">✈️ Airport Runs</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🌅 Early Morning"><span style="font-size:14px;font-weight:500;color:#1e293b">🌅 Early Morning</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🏢 Corporate"><span style="font-size:14px;font-weight:500;color:#1e293b">🏢 Corporate</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🔁 Regular Commutes"><span style="font-size:14px;font-weight:500;color:#1e293b">🔁 Regular Commutes</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🌙 Evening & Night Out"><span style="font-size:14px;font-weight:500;color:#1e293b">🌙 Evening & Night Out</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="👨‍👩‍👧 Family Rides"><span style="font-size:14px;font-weight:500;color:#1e293b">👨‍👩‍👧 Family Rides</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🗓️ General Scheduled" checked><span style="font-size:14px;font-weight:500;color:#1e293b">🗓️ General Scheduled</span></label>
+            <label class="svc-label"><input type="checkbox" class="svc-check" value="🏨 Hotel / Concierge"><span style="font-size:14px;font-weight:500;color:#1e293b">🏨 Hotel / Concierge</span></label>
+          </div>
+        </div>
+
+        <!-- Contact & Payment -->
+        <div>
+          <div class="section-label">Contact &amp; Payment</div>
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:4px">WhatsApp / Phone *</label>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:5px">Ride requests will arrive via WhatsApp to this number</div>
+            <input type="tel" id="p-phone" class="input-f" placeholder="+1 (303) 555-0100" required>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Venmo</label>
+              <div style="display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden">
+                <span style="padding:10px 12px;font-size:14px;color:#94a3b8;background:#f8fafc;border-right:1px solid #e2e8f0">@</span>
+                <input type="text" id="p-venmo" placeholder="username" style="flex:1;padding:10px 12px;font-size:14px;color:#0f172a;border:none;outline:none">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">CashApp</label>
+              <div style="display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden">
+                <span style="padding:10px 12px;font-size:14px;color:#94a3b8;background:#f8fafc;border-right:1px solid #e2e8f0">$</span>
+                <input type="text" id="p-cash" placeholder="cashtag" style="flex:1;padding:10px 12px;font-size:14px;color:#0f172a;border:none;outline:none">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Zelle</label>
+              <input type="text" id="p-zelle" class="input-f" placeholder="phone or email">
+            </div>
+          </div>
+        </div>
+
+        <!-- Brand Color -->
+        <div>
+          <div class="section-label">Brand Color</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div class="color-dot chosen" data-c="#F59E0B" data-d="#D97706" style="background:#F59E0B"></div>
+            <div class="color-dot"        data-c="#2563EB" data-d="#1D4ED8" style="background:#2563EB"></div>
+            <div class="color-dot"        data-c="#10B981" data-d="#059669" style="background:#10B981"></div>
+            <div class="color-dot"        data-c="#7C3AED" data-d="#6D28D9" style="background:#7C3AED"></div>
+            <div class="color-dot"        data-c="#EF4444" data-d="#DC2626" style="background:#EF4444"></div>
+            <div class="color-dot"        data-c="#0F172A" data-d="#020617" style="background:#0F172A;border:2px solid #e2e8f0"></div>
+          </div>
+          <input type="hidden" id="p-color"  value="#F59E0B">
+          <input type="hidden" id="p-colord" value="#D97706">
+        </div>
+
+        <div>
+          <button type="submit" class="btn-save" id="save-btn">Save Profile</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       REQUESTS TAB
+  ════════════════════════════════════════════════════ -->
+  <div id="requests-tab" style="display:none" class="fade-in">
+
+    <!-- Status filters -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+      <button class="tab-btn active"   id="rf-all"       onclick="filterRequests('all')">All</button>
+      <button class="tab-btn inactive" id="rf-pending"   onclick="filterRequests('pending')">🟡 Pending</button>
+      <button class="tab-btn inactive" id="rf-confirmed" onclick="filterRequests('confirmed')">🟢 Confirmed</button>
+      <button class="tab-btn inactive" id="rf-completed" onclick="filterRequests('completed')">✓ Completed</button>
+      <button class="tab-btn inactive" id="rf-declined"  onclick="filterRequests('declined')">✗ Declined</button>
+    </div>
+
+    <!-- Request list -->
+    <div id="requests-list" style="display:flex;flex-direction:column;gap:12px">
+      <!-- Populated by JS -->
+    </div>
+    <div id="requests-empty" style="display:none;text-align:center;padding:60px 20px;color:#94a3b8">
+      <div style="font-size:40px;margin-bottom:12px">📭</div>
+      <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No ride requests yet</div>
+      <div style="font-size:14px">Share your booking link with riders and requests will appear here in real time.</div>
+    </div>
+    <div id="requests-loading" style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">Loading requests…</div>
+  </div>
+
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+
+let currentUser = null;
+let allRequests = [];
+let activeFilter = 'all';
+let requestsListener = null; // real-time listener handle
+
+// ── Auth guard ─────────────────────────────────────────────────────
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  await loadProfile();
+  listenToRequests();
+  document.getElementById('loading-overlay').style.display = 'none';
+});
+
+// ── Sign out ───────────────────────────────────────────────────────
+function signOut() {
+  if (requestsListener) requestsListener(); // detach listener
+  auth.signOut().then(() => window.location.href = 'index.html');
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────
+function showTab(tab) {
+  const isProfile = tab === 'profile';
+  document.getElementById('profile-tab').style.display  = isProfile ? 'block' : 'none';
+  document.getElementById('requests-tab').style.display = isProfile ? 'none'  : 'block';
+  ['profile','requests'].forEach(t => {
+    const btn = document.getElementById(`tab-${t}`);
+    btn.classList.toggle('active',   t === tab);
+    btn.classList.toggle('inactive', t !== tab);
+  });
+}
+
+// ── Color swatches ─────────────────────────────────────────────────
+document.querySelectorAll('.color-dot').forEach(dot => {
+  dot.addEventListener('click', function () {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('chosen'));
+    this.classList.add('chosen');
+    document.getElementById('p-color').value  = this.dataset.c;
+    document.getElementById('p-colord').value = this.dataset.d;
+    document.documentElement.style.setProperty('--ac',   this.dataset.c);
+    document.documentElement.style.setProperty('--ac-d', this.dataset.d);
+  });
+});
+
+// ── Load & populate profile ────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const snap = await db.collection('drivers').doc(currentUser.uid).get();
+    if (!snap.exists) {
+      // New user — show prompt
+      document.getElementById('setup-prompt').style.display = 'flex';
+      return;
+    }
+    populateProfile(snap.data());
+  } catch (err) {
+    console.error('loadProfile:', err);
+  }
+}
+
+function populateProfile(d) {
+  document.getElementById('p-name').value    = d.name        || '';
+  document.getElementById('p-biz').value     = d.businessName|| '';
+  document.getElementById('p-city').value    = d.city        || '';
+  document.getElementById('p-vehicle').value = d.vehicle     || '';
+  document.getElementById('p-tagline').value = d.tagline     || '';
+  document.getElementById('p-phone').value   = d.phone       || '';
+  document.getElementById('p-venmo').value   = d.venmo       || '';
+  document.getElementById('p-cash').value    = d.cashapp     || '';
+  document.getElementById('p-zelle').value   = d.zelle       || '';
+  document.getElementById('p-logo').value    = d.logoUrl     || '';
+  if (d.logoUrl) showLogoPreview(d.logoUrl);
+
+  // Services checkboxes
+  const svcs = d.services || [];
+  document.querySelectorAll('.svc-check').forEach(cb => {
+    cb.checked = svcs.includes(cb.value);
+  });
+
+  // Color
+  if (d.accentColor) {
+    document.getElementById('p-color').value  = d.accentColor;
+    document.getElementById('p-colord').value = d.accentColorDark || d.accentColor;
+    document.documentElement.style.setProperty('--ac',   d.accentColor);
+    document.documentElement.style.setProperty('--ac-d', d.accentColorDark || d.accentColor);
+    document.querySelectorAll('.color-dot').forEach(dot => {
+      dot.classList.toggle('chosen', dot.dataset.c === d.accentColor);
+    });
+  }
+
+  // Update nav
+  document.getElementById('nav-biz-name').textContent = d.businessName || '';
+
+  // Show booking link banner
+  const link = bookingUrl(currentUser.uid);
+  document.getElementById('link-display').textContent = link;
+  document.getElementById('nav-view-page').href = link;
+  document.getElementById('link-banner').style.display = 'flex';
+  document.getElementById('setup-prompt').style.display = 'none';
+}
+
+// ── Save profile ───────────────────────────────────────────────────
+async function saveProfile(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const services = Array.from(document.querySelectorAll('.svc-check:checked')).map(c => c.value);
+
+  const data = {
+    name:           document.getElementById('p-name').value.trim(),
+    businessName:   document.getElementById('p-biz').value.trim(),
+    city:           document.getElementById('p-city').value.trim(),
+    vehicle:        document.getElementById('p-vehicle').value.trim(),
+    tagline:        document.getElementById('p-tagline').value.trim(),
+    phone:          document.getElementById('p-phone').value.trim(),
+    venmo:          document.getElementById('p-venmo').value.trim(),
+    cashapp:        document.getElementById('p-cash').value.trim(),
+    zelle:          document.getElementById('p-zelle').value.trim(),
+    logoUrl:        document.getElementById('p-logo').value.trim(),
+    accentColor:    document.getElementById('p-color').value,
+    accentColorDark:document.getElementById('p-colord').value,
+    services,
+    updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    await db.collection('drivers').doc(currentUser.uid).set(data, { merge: true });
+
+    // Update UI
+    document.getElementById('nav-biz-name').textContent = data.businessName;
+    const link = bookingUrl(currentUser.uid);
+    document.getElementById('link-display').textContent = link;
+    document.getElementById('nav-view-page').href = link;
+    document.getElementById('link-banner').style.display = 'flex';
+    document.getElementById('setup-prompt').style.display = 'none';
+
+    const toast = document.getElementById('save-toast');
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+
+  } catch (err) {
+    alert('Error saving profile: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Profile';
+  }
+}
+
+// ── Booking link actions ───────────────────────────────────────────
+function copyBookingLink() {
+  copyToClipboard(bookingUrl(currentUser.uid), document.getElementById('copy-link-btn'));
+}
+
+function shareOnWhatsApp() {
+  const biz  = document.getElementById('p-biz').value  || 'My driver page';
+  const link = bookingUrl(currentUser.uid);
+  openWhatsApp('', `Hey! Book rides with ${biz} directly — no Uber fees, no surge.\n\n📲 ${link}`);
+}
+
+// ── Real-time ride requests listener ──────────────────────────────
+function listenToRequests() {
+  requestsListener = db.collection('rideRequests')
+    .where('driverId', '==', currentUser.uid)
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(snapshot => {
+      allRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updatePendingBadge();
+      renderRequests();
+      document.getElementById('requests-loading').style.display = 'none';
+    }, err => {
+      console.error('requests listener:', err);
+      document.getElementById('requests-loading').textContent = 'Could not load requests.';
+    });
+}
+
+function updatePendingBadge() {
+  const pending = allRequests.filter(r => r.status === 'pending').length;
+  const badge = document.getElementById('pending-badge');
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── Filter & render requests ───────────────────────────────────────
+function filterRequests(filter) {
+  activeFilter = filter;
+  ['all','pending','confirmed','completed','declined'].forEach(f => {
+    const btn = document.getElementById(`rf-${f}`);
+    btn.classList.toggle('active',   f === filter);
+    btn.classList.toggle('inactive', f !== filter);
+  });
+  renderRequests();
+}
+
+function renderRequests() {
+  const list = document.getElementById('requests-list');
+  const empty = document.getElementById('requests-empty');
+
+  const filtered = activeFilter === 'all'
+    ? allRequests
+    : allRequests.filter(r => r.status === activeFilter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(r => requestCard(r)).join('');
+}
+
+function requestCard(r) {
+  const statusLabels = {
+    pending:   '<span class="status-pill pill-pending">🟡 Pending</span>',
+    confirmed: '<span class="status-pill pill-confirmed">🟢 Confirmed</span>',
+    declined:  '<span class="status-pill pill-declined">✗ Declined</span>',
+    completed: '<span class="status-pill pill-completed">✓ Completed</span>',
+  };
+  const pill   = statusLabels[r.status] || statusLabels.pending;
+  const dt     = r.createdAt ? fmtDateTime(r.createdAt) : 'Just now';
+  const rideDate = r.date ? fmtDate(r.date)   : '—';
+  const rideTime = r.time ? fmtTime(r.time)   : '—';
+
+  let actions = '';
+  if (r.status === 'pending') {
+    actions = `
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="action-btn" onclick="updateStatus('${r.id}','confirmed')"
+          style="background:#D1FAE5;color:#065F46">✓ Confirm</button>
+        <button class="action-btn" onclick="updateStatus('${r.id}','declined')"
+          style="background:#FEE2E2;color:#991B1B">✗ Decline</button>
+        <button class="action-btn" onclick="replyWhatsApp('${r.id}')"
+          style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+      </div>`;
+  } else if (r.status === 'confirmed') {
+    actions = `
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="action-btn" onclick="updateStatus('${r.id}','completed')"
+          style="background:#E2E8F0;color:#475569">✓ Mark Complete</button>
+        <button class="action-btn" onclick="replyWhatsApp('${r.id}')"
+          style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+      </div>`;
+  }
+
+  return `
+    <div class="req-card border-${r.status || 'pending'}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#0f172a">${escHtml(r.riderName || '—')}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">${escHtml(r.riderPhone || '—')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${pill}
+          <span style="font-size:11px;color:#94a3b8">${dt}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div style="background:#f8fafc;border-radius:10px;padding:10px">
+          <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:3px">PICKUP</div>
+          <div style="color:#0f172a;font-weight:500">${escHtml(r.pickup || '—')}</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:10px">
+          <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:3px">DROP-OFF</div>
+          <div style="color:#0f172a;font-weight:500">${escHtml(r.dropoff || '—')}</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:10px">
+          <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:3px">DATE & TIME</div>
+          <div style="color:#0f172a;font-weight:500">${rideDate}<br><span style="color:#64748b">${rideTime}</span></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:10px">
+          <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:3px">PASSENGERS</div>
+          <div style="color:#0f172a;font-weight:500">${escHtml(r.passengers || '1')} · ${escHtml(r.luggage || 'No luggage')}</div>
+        </div>
+      </div>
+      ${r.notes ? `<div style="margin-top:10px;background:#FFF7ED;border-radius:10px;padding:10px;font-size:13px;color:#92400E">📝 ${escHtml(r.notes)}</div>` : ''}
+      ${actions}
+    </div>
+  `;
+}
+
+// ── Update request status ──────────────────────────────────────────
+async function updateStatus(id, status) {
+  try {
+    await db.collection('rideRequests').doc(id).update({ status });
+    // onSnapshot will re-render automatically
+  } catch (err) {
+    alert('Could not update status: ' + err.message);
+  }
+}
+
+// ── Reply via WhatsApp ────────────────────────────────────────────
+function replyWhatsApp(id) {
+  const r = allRequests.find(req => req.id === id);
+  if (!r) return;
+  const msg = `Hi ${r.riderName}, this is your driver. Regarding your ride request on ${fmtDate(r.date)} at ${fmtTime(r.time)} from ${r.pickup} to ${r.dropoff} — `;
+  openWhatsApp(r.riderPhone, msg);
+}
+
+// ── Utility ───────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Logo upload ────────────────────────────────────────────────────
+
+function showLogoPreview(url) {
+  const img  = document.getElementById('logo-preview-img');
+  const icon = document.getElementById('logo-preview-icon');
+  const rmBtn = document.getElementById('logo-remove-btn');
+  img.src = url;
+  img.style.display = 'block';
+  icon.style.display = 'none';
+  rmBtn.style.display = 'inline';
+}
+
+function hideLogoPreview() {
+  const img  = document.getElementById('logo-preview-img');
+  const icon = document.getElementById('logo-preview-icon');
+  const rmBtn = document.getElementById('logo-remove-btn');
+  img.src = '';
+  img.style.display = 'none';
+  icon.style.display = 'block';
+  rmBtn.style.display = 'none';
+}
+
+function handleLogoFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Validate size (2 MB)
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Logo must be under 2 MB. Please choose a smaller image.');
+    input.value = '';
+    return;
+  }
+
+  // Show instant preview via FileReader
+  const reader = new FileReader();
+  reader.onload = e => showLogoPreview(e.target.result);
+  reader.readAsDataURL(file);
+
+  // Upload to Firebase Storage
+  uploadLogo(file);
+}
+
+async function uploadLogo(file) {
+  if (!currentUser) return;
+
+  const ext   = file.name.split('.').pop().toLowerCase() || 'jpg';
+  const ref   = storage.ref(`logos/${currentUser.uid}/logo.${ext}`);
+
+  const progressWrap = document.getElementById('logo-progress-wrap');
+  const progressBar  = document.getElementById('logo-progress-bar');
+  const progressText = document.getElementById('logo-progress-text');
+
+  progressWrap.style.display = 'block';
+  progressBar.style.width    = '0%';
+  progressText.textContent   = 'Uploading…';
+
+  const task = ref.put(file, { contentType: file.type });
+
+  task.on('state_changed',
+    snapshot => {
+      const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+      progressBar.style.width  = pct + '%';
+      progressText.textContent = `Uploading… ${pct}%`;
+    },
+    err => {
+      progressWrap.style.display = 'none';
+      console.error('Logo upload failed:', err);
+      alert('Logo upload failed: ' + err.message);
+    },
+    async () => {
+      const downloadUrl = await task.snapshot.ref.getDownloadURL();
+      document.getElementById('p-logo').value = downloadUrl;
+      progressBar.style.width  = '100%';
+      progressText.textContent = '✓ Logo uploaded!';
+      setTimeout(() => { progressWrap.style.display = 'none'; }, 2000);
+    }
+  );
+}
+
+function removeLogo() {
+  document.getElementById('p-logo').value = '';
+  document.getElementById('logo-file-input').value = '';
+  hideLogoPreview();
+}
+
+</script>
+</body>
+</html>
