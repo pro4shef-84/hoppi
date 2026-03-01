@@ -26,6 +26,7 @@
       box-shadow: 0 4px 14px rgba(0,0,0,.15);
     }
     .btn-book:hover { background: var(--ac-d); }
+    .btn-book:disabled { opacity: .6; cursor: not-allowed; }
 
     .service-tag {
       display: inline-flex; align-items: center;
@@ -54,6 +55,12 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       background: #f8fafc; z-index: 200; text-align: center; padding: 20px;
     }
+
+    /* Google Places autocomplete dropdown override */
+    .pac-container { border-radius: 12px; border: 1.5px solid #e2e8f0; box-shadow: 0 8px 24px rgba(0,0,0,.1); font-family: 'Inter', sans-serif; }
+    .pac-item { padding: 10px 14px; font-size: 13px; cursor: pointer; }
+    .pac-item:hover { background: #f8fafc; }
+    .pac-item-selected { background: #FFF7ED; }
   </style>
 </head>
 <body style="background:#f8fafc;min-height:100vh">
@@ -76,11 +83,11 @@
   <a href="index.html" style="margin-top:24px;font-size:14px;font-weight:600;color:#F59E0B;text-decoration:none">← Back to DriverConnect</a>
 </div>
 
-<!-- Main content (hidden until profile loads) -->
+<!-- Main content -->
 <div id="page" style="display:none;min-height:100vh">
 
   <!-- ── Driver Hero ──────────────────────────────────────────────── -->
-  <div id="hero" style="background:#0f172a;text-align:center;padding:40px 20px 28px">
+  <div id="hero" style="background:#0f172a;text-align:center;padding:40px 20px 24px">
     <div id="avatar"
       class="avatar-grad"
       style="width:80px;height:80px;border-radius:50%;margin:0 auto 16px;
@@ -91,17 +98,20 @@
     <h1 id="biz-name"   style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-.3px"></h1>
     <p  id="drv-name"   style="font-size:13px;color:#94a3b8;margin-top:3px"></p>
     <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:8px">
-      <span id="city-el"    style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
+      <span id="city-el" style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
         <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span id="city-txt"></span>
       </span>
-      <span id="veh-el"     style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
+      <span id="veh-el" style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:4px">
         <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l3 1h4l3-1zM13 8h5l2 5"/></svg>
         <span id="veh-txt"></span>
       </span>
     </div>
     <p id="tagline-el" style="font-size:14px;color:#cbd5e1;margin-top:12px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.5"></p>
     <div id="services-el" style="margin-top:14px"></div>
+
+    <!-- Pricing table -->
+    <div id="pricing-el" style="margin-top:14px"></div>
   </div>
 
   <!-- ── Trust chips ──────────────────────────────────────────────── -->
@@ -130,16 +140,32 @@
       <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:18px">Request a Ride</h2>
       <form id="book-form" novalidate style="display:flex;flex-direction:column;gap:14px">
 
+        <!-- Pickup -->
         <div>
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Pickup Location *</label>
-          <input id="f-pickup" type="text" class="input-f" placeholder="Full address or landmark" required>
+          <input id="f-pickup" type="text" class="input-f" placeholder="Full address or landmark" required autocomplete="off">
         </div>
 
+        <!-- Dropoff -->
         <div>
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Drop-off Location *</label>
-          <input id="f-dropoff" type="text" class="input-f" placeholder="Destination address" required>
+          <input id="f-dropoff" type="text" class="input-f" placeholder="Destination address" required autocomplete="off">
         </div>
 
+        <!-- Route preview (shown after Maps autocomplete fills both) -->
+        <div id="route-preview" style="display:none;border-radius:12px;overflow:hidden;border:1.5px solid #e2e8f0">
+          <img id="route-map" src="" alt="Route preview" style="width:100%;height:140px;object-fit:cover;display:block;background:#e2e8f0">
+          <div style="background:#f8fafc;padding:10px 14px;display:flex;gap:20px;font-size:13px;align-items:center">
+            <span style="display:flex;align-items:center;gap:5px;color:#475569">
+              📍 <strong id="route-distance" style="color:#0f172a">—</strong>
+            </span>
+            <span style="display:flex;align-items:center;gap:5px;color:#475569">
+              ⏱ <strong id="route-duration" style="color:#0f172a">—</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Date / Time -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Date *</label>
@@ -151,6 +177,7 @@
           </div>
         </div>
 
+        <!-- Passengers / Luggage -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Passengers</label>
@@ -173,16 +200,32 @@
           </div>
         </div>
 
+        <!-- Service type + fare estimate -->
+        <div>
+          <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Service Type</label>
+          <select id="f-service" class="input-f" style="cursor:pointer" onchange="onServiceChange()">
+            <option value="">Select service type…</option>
+          </select>
+          <!-- Fare estimate badge -->
+          <div id="fare-estimate-wrap" style="display:none;margin-top:8px;background:#FFF7ED;border:1.5px solid #FDE68A;border-radius:10px;padding:10px 14px;display:none;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;color:#92400E;font-weight:500">Estimated fare</span>
+            <span style="font-size:18px;font-weight:800;color:#92400E">$<span id="fare-amount">0</span></span>
+          </div>
+        </div>
+
+        <!-- Name -->
         <div>
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Your Name *</label>
           <input id="f-name" type="text" class="input-f" placeholder="Full name" required>
         </div>
 
+        <!-- Phone -->
         <div>
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Your Phone Number *</label>
           <input id="f-phone" type="tel" class="input-f" placeholder="+1 (555) 000-0000" required>
         </div>
 
+        <!-- Notes -->
         <div>
           <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Special Requests <span style="font-weight:400;color:#94a3b8">(optional)</span></label>
           <textarea id="f-notes" rows="2" class="input-f" style="resize:none" placeholder="Flight number, accessibility needs, quiet ride preference…"></textarea>
@@ -199,10 +242,9 @@
       </form>
     </div>
 
-    <!-- ── Confirmation screen ───────────────────────────────────── -->
+    <!-- ── Confirmation screen ────────────────────────────────────── -->
     <div id="success-wrap" style="display:none;padding:40px 0" class="fade-in">
 
-      <!-- Green checkmark -->
       <div style="text-align:center;margin-bottom:20px">
         <div style="width:72px;height:72px;border-radius:50%;background:#D1FAE5;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
           <svg style="width:36px;height:36px;color:#065F46" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,41 +299,53 @@
 <script src="firebase-config.js"></script>
 <script>
 
-const driverId = new URLSearchParams(location.search).get('d');
+// ─────────────────────────────────────────────────────────────────
+// 🔑 Replace 'YOUR_KEY' with your Google Maps API key
+//    Enable: Maps JavaScript API, Places API, Directions API, Static Maps API
+//    Restrict the key to your Firebase Hosting domain for security.
+// ─────────────────────────────────────────────────────────────────
+const GOOGLE_MAPS_API_KEY = 'YOUR_KEY';
 
-if (!driverId) {
-  showError();
+// Load Google Maps JS API (skipped gracefully when key is placeholder)
+if (GOOGLE_MAPS_API_KEY !== 'YOUR_KEY') {
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMaps`;
+  s.async = true;
+  document.head.appendChild(s);
 } else {
-  loadDriver(driverId);
+  window.initMaps = () => {}; // no-op so no ReferenceError
 }
 
-let driverProfile   = null;
-let lastBookingData = null;
+// ── State ─────────────────────────────────────────────────────────
+const driverId = new URLSearchParams(location.search).get('d');
+let driverProfile    = null;
+let lastBookingData  = null;
+let selectedFare     = null;
+let pickupLat        = null, pickupLng  = null;
+let dropoffLat       = null, dropoffLng = null;
+let routeDistanceMiles = null;
+let routeDurationMins  = null;
 
-// ── Load driver from Firestore ─────────────────────────────────────
+if (!driverId) { showError(); }
+else           { loadDriver(driverId); }
+
+// ── Load driver ────────────────────────────────────────────────────
 async function loadDriver(uid) {
   try {
     const snap = await db.collection('drivers').doc(uid).get();
     if (!snap.exists) { showError(); return; }
-
     driverProfile = snap.data();
     renderProfile(driverProfile);
-
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('page').style.display = 'block';
     document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
 
-    // Pre-fill from URL params (Book Again flow)
-    const params = new URLSearchParams(location.search);
-    const preName  = params.get('name');
-    const prePhone = params.get('phone');
-    if (preName)  document.getElementById('f-name').value  = preName;
-    if (prePhone) document.getElementById('f-phone').value = prePhone;
+    // Pre-fill from ?name= ?phone= (Book Again flow)
+    const p = new URLSearchParams(location.search);
+    if (p.get('name'))  document.getElementById('f-name').value  = p.get('name');
+    if (p.get('phone')) document.getElementById('f-phone').value = p.get('phone');
 
-  } catch (err) {
-    console.error(err);
-    showError();
-  }
+  } catch (err) { console.error(err); showError(); }
 }
 
 function showError() {
@@ -299,7 +353,7 @@ function showError() {
   document.getElementById('error-screen').style.display  = 'flex';
 }
 
-// ── Render driver profile into the hero ───────────────────────────
+// ── Render driver profile ──────────────────────────────────────────
 function renderProfile(d) {
   const color  = d.accentColor     || '#F59E0B';
   const colorD = d.accentColorDark || '#D97706';
@@ -311,8 +365,7 @@ function renderProfile(d) {
   const avatarEl = document.getElementById('avatar');
   if (d.logoUrl) {
     const img = document.createElement('img');
-    img.src   = d.logoUrl;
-    img.alt   = d.businessName || '';
+    img.src = d.logoUrl; img.alt = d.businessName || '';
     img.style.cssText = 'width:100%;height:100%;object-fit:cover';
     img.onerror = () => {
       avatarEl.removeChild(img);
@@ -333,24 +386,48 @@ function renderProfile(d) {
   document.getElementById('veh-txt').textContent    = d.vehicle || '';
   document.getElementById('tagline-el').textContent = d.tagline || '';
 
-  // Services
+  // Services tags
   const svcEl = document.getElementById('services-el');
   (d.services || []).forEach(s => {
     const span = document.createElement('span');
-    span.className = 'service-tag';
-    span.textContent = s;
+    span.className = 'service-tag'; span.textContent = s;
     svcEl.appendChild(span);
   });
 
-  // Payment
+  // Pricing table in hero
+  const pricingRows = (d.pricing || []).filter(r => r.service && r.price > 0);
+  if (pricingRows.length > 0) {
+    document.getElementById('pricing-el').innerHTML = `
+      <div style="background:rgba(255,255,255,.07);border-radius:12px;padding:12px 16px;max-width:320px;margin:0 auto;text-align:left">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:8px">Starting rates</div>
+        ${pricingRows.map(r => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="font-size:13px;color:#cbd5e1">${escHtml(r.service)}</span>
+            <span style="font-size:13px;font-weight:700;color:#fff">from $${r.price}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Service type dropdown
+  const sel = document.getElementById('f-service');
+  sel.innerHTML = '<option value="">Select service type…</option>';
+  (d.pricing || []).forEach(r => {
+    if (!r.service) return;
+    const opt = document.createElement('option');
+    opt.value = r.service;
+    opt.dataset.price = r.price || 0;
+    opt.textContent = r.price > 0 ? `${r.service} — from $${r.price}` : r.service;
+    sel.appendChild(opt);
+  });
+
+  // Payment rows
   const payEl  = document.getElementById('pay-rows');
   let hasPay   = false;
-  const payOpts = [
+  [
     { label: 'Venmo',   val: d.venmo,   prefix: '@', href: d.venmo   ? `https://venmo.com/${d.venmo}`   : null },
     { label: 'CashApp', val: d.cashapp, prefix: '$', href: d.cashapp ? `https://cash.app/$${d.cashapp}` : null },
     { label: 'Zelle',   val: d.zelle,   prefix: '',  href: null },
-  ];
-  payOpts.forEach(opt => {
+  ].forEach(opt => {
     if (!opt.val) return;
     hasPay = true;
     const row = document.createElement('div');
@@ -359,26 +436,111 @@ function renderProfile(d) {
       <span style="font-size:14px;font-weight:500;color:#475569">${opt.label}</span>
       ${opt.href
         ? `<a href="${opt.href}" target="_blank" style="font-size:14px;font-weight:700;color:#0f172a;text-decoration:none">${opt.prefix}${opt.val}</a>`
-        : `<span style="font-size:14px;font-weight:700;color:#0f172a">${opt.prefix}${opt.val}</span>`}
-    `;
+        : `<span style="font-size:14px;font-weight:700;color:#0f172a">${opt.prefix}${opt.val}</span>`}`;
     payEl.appendChild(row);
   });
   if (!hasPay) document.getElementById('pay-section').style.display = 'none';
+}
+
+// ── Service type change → update fare estimate ─────────────────────
+function onServiceChange() {
+  const sel = document.getElementById('f-service');
+  const opt = sel.options[sel.selectedIndex];
+  const price = parseFloat(opt?.dataset?.price || '0');
+  const wrap  = document.getElementById('fare-estimate-wrap');
+  if (price > 0) {
+    document.getElementById('fare-amount').textContent = price;
+    wrap.style.display = 'flex';
+    selectedFare = price;
+  } else {
+    wrap.style.display = 'none';
+    selectedFare = null;
+  }
+}
+
+// ── Google Maps Autocomplete ───────────────────────────────────────
+let pickupAC  = null;
+let dropoffAC = null;
+
+window.initMaps = function () {
+  const pickupInput  = document.getElementById('f-pickup');
+  const dropoffInput = document.getElementById('f-dropoff');
+  const opts = { types: ['geocode', 'establishment'] };
+
+  pickupAC  = new google.maps.places.Autocomplete(pickupInput,  opts);
+  dropoffAC = new google.maps.places.Autocomplete(dropoffInput, opts);
+
+  pickupAC.addListener('place_changed', () => {
+    const place = pickupAC.getPlace();
+    if (place.geometry?.location) {
+      pickupLat = place.geometry.location.lat();
+      pickupLng = place.geometry.location.lng();
+    }
+    tryShowRoute();
+  });
+
+  dropoffAC.addListener('place_changed', () => {
+    const place = dropoffAC.getPlace();
+    if (place.geometry?.location) {
+      dropoffLat = place.geometry.location.lat();
+      dropoffLng = place.geometry.location.lng();
+    }
+    tryShowRoute();
+  });
+};
+
+function tryShowRoute() {
+  const pickupVal  = document.getElementById('f-pickup').value.trim();
+  const dropoffVal = document.getElementById('f-dropoff').value.trim();
+  if (!pickupVal || !dropoffVal) return;
+  if (pickupLat === null || dropoffLat === null) return;
+
+  // Static map preview
+  const mapUrl =
+    `https://maps.googleapis.com/maps/api/staticmap?size=480x160&scale=2` +
+    `&markers=color:green%7Clabel:A%7C${pickupLat},${pickupLng}` +
+    `&markers=color:red%7Clabel:B%7C${dropoffLat},${dropoffLng}` +
+    `&path=color:0x${(getComputedStyle(document.documentElement).getPropertyValue('--ac').trim().replace('#',''))}ff|weight:4|${pickupLat},${pickupLng}|${dropoffLat},${dropoffLng}` +
+    `&key=${GOOGLE_MAPS_API_KEY}`;
+
+  document.getElementById('route-map').src = mapUrl;
+  document.getElementById('route-preview').style.display = 'block';
+
+  // Directions for distance + duration
+  const ds = new google.maps.DirectionsService();
+  ds.route({
+    origin:      { lat: pickupLat,  lng: pickupLng  },
+    destination: { lat: dropoffLat, lng: dropoffLng },
+    travelMode:  google.maps.TravelMode.DRIVING,
+  }, (result, status) => {
+    if (status !== 'OK') return;
+    const leg  = result.routes[0].legs[0];
+    const miles = (leg.distance.value / 1609.34).toFixed(1);
+    const mins  = Math.round(leg.duration.value / 60);
+    const durStr = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} min`;
+
+    document.getElementById('route-distance').textContent = `${miles} mi`;
+    document.getElementById('route-duration').textContent = durStr;
+    routeDistanceMiles = parseFloat(miles);
+    routeDurationMins  = mins;
+  });
 }
 
 // ── Form submit ────────────────────────────────────────────────────
 document.getElementById('book-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
-  const pickup     = document.getElementById('f-pickup').value.trim();
-  const dropoff    = document.getElementById('f-dropoff').value.trim();
-  const date       = document.getElementById('f-date').value;
-  const time       = document.getElementById('f-time').value;
-  const passengers = document.getElementById('f-pax').value;
-  const luggage    = document.getElementById('f-luggage').value;
-  const riderName  = document.getElementById('f-name').value.trim();
-  const riderPhone = document.getElementById('f-phone').value.trim();
-  const notes      = document.getElementById('f-notes').value.trim();
+  const pickup          = document.getElementById('f-pickup').value.trim();
+  const dropoff         = document.getElementById('f-dropoff').value.trim();
+  const date            = document.getElementById('f-date').value;
+  const time            = document.getElementById('f-time').value;
+  const passengers      = document.getElementById('f-pax').value;
+  const luggage         = document.getElementById('f-luggage').value;
+  const selectedService = document.getElementById('f-service').value;
+  const riderName       = document.getElementById('f-name').value.trim();
+  const riderPhone      = document.getElementById('f-phone').value.trim();
+  const notes           = document.getElementById('f-notes').value.trim();
+  const estimatedFare   = selectedFare || null;
 
   if (!pickup || !dropoff || !date || !time || !riderName || !riderPhone) {
     alert('Please fill in all required fields.');
@@ -393,55 +555,71 @@ document.getElementById('book-form').addEventListener('submit', async function (
   try {
     await db.collection('rideRequests').add({
       driverId,
-      riderName,
-      riderPhone,
-      pickup,
-      dropoff,
-      date,
-      time,
-      passengers,
-      luggage,
+      riderName, riderPhone,
+      pickup, dropoff,
+      date, time,
+      passengers, luggage,
+      selectedService:  selectedService  || null,
+      estimatedFare:    estimatedFare,
+      confirmedFare:    null,
       notes,
-      status:    'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status:           'pending',
+      pickupLat:        pickupLat,
+      pickupLng:        pickupLng,
+      dropoffLat:       dropoffLat,
+      dropoffLng:       dropoffLng,
+      distanceMiles:    routeDistanceMiles,
+      durationMinutes:  routeDurationMins,
+      createdAt:        firebase.firestore.FieldValue.serverTimestamp(),
     });
   } catch (err) {
     console.error('Firestore save error:', err);
   }
 
-  // 2️⃣  Open WhatsApp
+  // 2️⃣  Open WhatsApp with full booking message
   const bizName = driverProfile?.businessName || driverProfile?.name || 'Driver';
+  const fareNote = estimatedFare ? `\n💰 *Estimated Fare:* $${estimatedFare}` : '';
+  const svcNote  = selectedService ? `\n🚘 *Service:* ${selectedService}` : '';
+  const distNote = routeDistanceMiles ? `\n📏 *Distance:* ${routeDistanceMiles} mi (~${routeDurationMins} min)` : '';
+
   const msg =
     `🚗 *New Ride Request — ${bizName}*\n\n` +
-    `*Rider:* ${riderName}\n` +
-    `*Phone:* ${riderPhone}\n\n` +
+    `*Rider:* ${riderName}\n*Phone:* ${riderPhone}\n\n` +
     `📍 *Pickup:* ${pickup}\n` +
     `🏁 *Drop-off:* ${dropoff}\n` +
     `📅 *Date:* ${fmtDate(date)}\n` +
     `⏰ *Time:* ${fmtTime(time)}\n` +
     `👥 *Passengers:* ${passengers}\n` +
     `🧳 *Luggage:* ${luggage}` +
+    svcNote + fareNote + distNote +
     (notes ? `\n📝 *Notes:* ${notes}` : '') +
     `\n\n_Sent via DriverConnect_`;
 
-  if (driverProfile?.phone) {
-    openWhatsApp(driverProfile.phone, msg);
-  }
+  if (driverProfile?.phone) openWhatsApp(driverProfile.phone, msg);
 
   // 3️⃣  Show confirmation screen
-  showSuccess({ pickup, dropoff, date, time, riderName, riderPhone });
+  showSuccess({ pickup, dropoff, date, time, riderName, riderPhone, estimatedFare, selectedService });
   submitBtn.disabled = false;
 });
 
 // ── Confirmation screen ────────────────────────────────────────────
 function showSuccess(data) {
   lastBookingData = data;
-
   const driverName = driverProfile?.name || driverProfile?.businessName || 'Driver';
   document.getElementById('success-driver-name').textContent = driverName;
 
+  const fareRow = data.estimatedFare
+    ? `<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:6px;border-top:1px solid #e2e8f0">
+         <span style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Estimated Fare</span>
+         <span style="font-size:20px;font-weight:800;color:#0f172a">$${data.estimatedFare}</span>
+       </div>` : '';
+
   document.getElementById('success-summary').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px">
+      ${data.selectedService ? `<div style="display:flex;gap:12px;align-items:baseline">
+        <span style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:64px">Service</span>
+        <span style="font-weight:600;color:#0f172a">${escHtml(data.selectedService)}</span>
+      </div>` : ''}
       <div style="display:flex;gap:12px;align-items:baseline">
         <span style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:64px">Pickup</span>
         <span style="font-weight:600;color:#0f172a">${escHtml(data.pickup)}</span>
@@ -454,8 +632,8 @@ function showSuccess(data) {
         <span style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:64px">Date</span>
         <span style="font-weight:600;color:#0f172a">${fmtDate(data.date)} at ${fmtTime(data.time)}</span>
       </div>
-    </div>
-  `;
+      ${fareRow}
+    </div>`;
 
   document.getElementById('form-wrap').style.display    = 'none';
   document.getElementById('success-wrap').style.display = 'block';
@@ -464,16 +642,22 @@ function showSuccess(data) {
 
 function messageDriverWhatsApp() {
   if (!driverProfile?.phone || !lastBookingData) return;
-  const d = lastBookingData;
+  const d    = lastBookingData;
   const name = driverProfile.name || driverProfile.businessName || 'there';
   openWhatsApp(
     driverProfile.phone,
-    `Hi ${name}! I just sent a ride request via DriverConnect.\n📍 From: ${d.pickup}\n🏁 To: ${d.dropoff}\n📅 Date: ${fmtDate(d.date)} at ${fmtTime(d.time)}`
+    `Hi ${name}! I just sent a ride request via DriverConnect.\n📍 From: ${d.pickup}\n🏁 To: ${d.dropoff}\n📅 Date: ${fmtDate(d.date)} at ${fmtTime(d.time)}` +
+    (d.estimatedFare ? `\n💰 Estimated fare: $${d.estimatedFare}` : '')
   );
 }
 
 function resetForm() {
   document.getElementById('book-form').reset();
+  document.getElementById('route-preview').style.display     = 'none';
+  document.getElementById('fare-estimate-wrap').style.display = 'none';
+  selectedFare = null; pickupLat = null; pickupLng = null;
+  dropoffLat = null; dropoffLng = null;
+  routeDistanceMiles = null; routeDurationMins = null;
   document.getElementById('success-wrap').style.display = 'none';
   document.getElementById('form-wrap').style.display    = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });

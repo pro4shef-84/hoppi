@@ -40,7 +40,7 @@
     .svc-label { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: background .12s; }
     .svc-label:hover { background: #f8fafc; }
 
-    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .12s, border-color .12s; }
+    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .12px, border-color .12s; }
     .color-dot:hover  { transform: scale(1.15); }
     .color-dot.chosen { border-color: #0f172a; transform: scale(1.1); }
 
@@ -110,6 +110,17 @@
     .tag-active   { background: var(--ac) !important; color: #fff !important; border-color: var(--ac) !important; }
     .tag-inactive { background: transparent; color: #64748b; border-color: #e2e8f0; }
     .tag-inactive:hover { border-color: var(--ac); color: var(--ac); }
+
+    /* ── Pricing rows ─────────────────────────────────────────── */
+    .price-row { display: flex; gap: 8px; align-items: center; }
+    .fare-input {
+      width: 64px; border: none; outline: none;
+      font-size: 14px; font-weight: 700; color: #0f172a; background: transparent;
+    }
+    /* hide number spinners */
+    .fare-input::-webkit-inner-spin-button,
+    .fare-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .fare-input { -moz-appearance: textfield; }
   </style>
 </head>
 <body style="background:#f8fafc;min-height:100vh">
@@ -129,7 +140,6 @@
 <!-- ── Top Nav ─────────────────────────────────────────────────── -->
 <nav style="background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:50">
   <div style="max-width:900px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px">
-    <!-- Logo -->
     <a href="index.html" style="display:flex;align-items:center;gap:7px;text-decoration:none">
       <div style="width:30px;height:30px;border-radius:9px;background:#F59E0B;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg style="width:16px;height:16px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,8 +150,6 @@
     </a>
     <span style="color:#e2e8f0;margin:0 4px">|</span>
     <span id="nav-biz-name" style="font-size:14px;font-weight:600;color:#475569;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
-
-    <!-- Right actions -->
     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
       <a id="nav-view-page" href="#" target="_blank"
          style="font-size:13px;font-weight:600;color:#475569;text-decoration:none;padding:7px 14px;border:1.5px solid #e2e8f0;border-radius:9px;display:flex;align-items:center;gap:5px;transition:background .12s"
@@ -149,7 +157,7 @@
         <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
         </svg>
-        <span class="hidden sm:inline">My Page</span>
+        My Page
       </a>
       <button onclick="signOut()"
         style="font-size:13px;font-weight:600;color:#64748b;background:transparent;border:none;cursor:pointer;padding:7px 12px;border-radius:9px;transition:background .12s"
@@ -160,9 +168,9 @@
   </div>
 </nav>
 
-<div style="max-width:900px;margin:0 auto;padding:24px 16px 60px" id="main-content">
+<div style="max-width:900px;margin:0 auto;padding:24px 16px 60px">
 
-  <!-- ── Booking Link Banner ──────────────────────────────────────── -->
+  <!-- Booking Link Banner -->
   <div id="link-banner" style="background:#0f172a;border-radius:18px;padding:20px 22px;margin-bottom:24px;display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div style="flex:1;min-width:0">
@@ -171,9 +179,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0">
         <button id="copy-link-btn" onclick="copyBookingLink()"
-          style="font-size:13px;font-weight:600;background:#F59E0B;color:#fff;padding:8px 16px;border-radius:9px;border:none;cursor:pointer">
-          Copy Link
-        </button>
+          style="font-size:13px;font-weight:600;background:#F59E0B;color:#fff;padding:8px 16px;border-radius:9px;border:none;cursor:pointer">Copy Link</button>
         <button onclick="shareOnWhatsApp()"
           style="font-size:13px;font-weight:600;background:#25D366;color:#fff;padding:8px 14px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px">
           <svg style="width:14px;height:14px;flex-shrink:0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -183,7 +189,7 @@
     </div>
   </div>
 
-  <!-- ── Profile incomplete prompt ───────────────────────────────── -->
+  <!-- Profile incomplete prompt -->
   <div id="setup-prompt" style="background:#FFF7ED;border:1.5px solid #FDE68A;border-radius:16px;padding:18px 20px;margin-bottom:24px;display:none;align-items:center;gap:14px">
     <div style="font-size:24px;flex-shrink:0">👋</div>
     <div>
@@ -192,9 +198,9 @@
     </div>
   </div>
 
-  <!-- ── Tabs ────────────────────────────────────────────────────── -->
+  <!-- Tabs -->
   <div style="display:flex;gap:6px;background:#f1f5f9;border-radius:14px;padding:5px;margin-bottom:24px;width:fit-content">
-    <button class="tab-btn active"  id="tab-profile"  onclick="showTab('profile')">📋 My Profile</button>
+    <button class="tab-btn active"   id="tab-profile"  onclick="showTab('profile')">📋 My Profile</button>
     <button class="tab-btn inactive" id="tab-requests" onclick="showTab('requests')">
       🗓 Ride Requests
       <span id="pending-badge" style="display:none;background:#EF4444;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:5px"></span>
@@ -202,14 +208,10 @@
     <button class="tab-btn inactive" id="tab-riders" onclick="showTab('riders')">👥 My Riders</button>
   </div>
 
-  <!-- ════════════════════════════════════════════════════
-       PROFILE TAB
-  ════════════════════════════════════════════════════ -->
+  <!-- ════════════════ PROFILE TAB ════════════════ -->
   <div id="profile-tab" class="fade-in">
-
     <div style="background:#fff;border-radius:20px;border:1px solid #e2e8f0;padding:24px 28px">
 
-      <!-- Toast -->
       <div id="save-toast" style="display:none;background:#D1FAE5;color:#065F46;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;margin-bottom:20px">
         ✓ Profile saved! Your booking link is now live.
       </div>
@@ -234,32 +236,24 @@
             </div>
             <div>
               <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:8px">Business Logo <span style="font-weight:400;color:#94a3b8">(optional)</span></label>
-              <!-- Logo upload UI -->
               <div style="display:flex;align-items:center;gap:14px">
-                <!-- Circular preview -->
-                <div id="logo-preview-wrap" style="width:68px;height:68px;border-radius:50%;border:2px dashed #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;transition:border-color .15s" onclick="document.getElementById('logo-file-input').click()" title="Click to upload logo">
+                <div id="logo-preview-wrap" style="width:68px;height:68px;border-radius:50%;border:2px dashed #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer" onclick="document.getElementById('logo-file-input').click()">
                   <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
                   <svg id="logo-preview-icon" style="width:26px;height:26px;color:#cbd5e1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <!-- Upload button + progress -->
                 <div style="flex:1">
                   <input type="file" id="logo-file-input" accept="image/*" style="display:none" onchange="handleLogoFile(this)">
                   <button type="button" onclick="document.getElementById('logo-file-input').click()"
-                    style="font-size:13px;font-weight:600;color:#475569;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 16px;cursor:pointer;transition:background .12s"
-                    onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
-                    📁 Choose Image
-                  </button>
+                    style="font-size:13px;font-weight:600;color:#475569;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 16px;cursor:pointer">📁 Choose Image</button>
                   <div style="font-size:11px;color:#94a3b8;margin-top:5px">PNG, JPG, GIF · Max 2 MB</div>
-                  <!-- Progress bar -->
                   <div id="logo-progress-wrap" style="display:none;margin-top:8px">
                     <div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">
                       <div id="logo-progress-bar" style="height:100%;background:var(--ac);width:0%;transition:width .2s"></div>
                     </div>
                     <div id="logo-progress-text" style="font-size:11px;color:#64748b;margin-top:4px">Uploading…</div>
                   </div>
-                  <!-- Remove button -->
                   <button type="button" id="logo-remove-btn" onclick="removeLogo()" style="display:none;font-size:12px;color:#EF4444;background:none;border:none;cursor:pointer;margin-top:6px;padding:0">✕ Remove logo</button>
                 </div>
               </div>
@@ -294,6 +288,21 @@
             <label class="svc-label"><input type="checkbox" class="svc-check" value="🗓️ General Scheduled" checked><span style="font-size:14px;font-weight:500;color:#1e293b">🗓️ General Scheduled</span></label>
             <label class="svc-label"><input type="checkbox" class="svc-check" value="🏨 Hotel / Concierge"><span style="font-size:14px;font-weight:500;color:#1e293b">🏨 Hotel / Concierge</span></label>
           </div>
+        </div>
+
+        <!-- ── Pricing ──────────────────────────────────────────── -->
+        <div>
+          <div class="section-label">Pricing</div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Set base rates for each service — riders will see these on your booking page.</div>
+          <div id="pricing-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button type="button" onclick="addPriceRow()"
+            style="margin-top:10px;font-size:13px;font-weight:600;color:var(--ac);background:transparent;border:1.5px dashed var(--ac);border-radius:10px;padding:8px 16px;cursor:pointer;transition:background .12s"
+            onmouseover="this.style.background='rgba(245,158,11,.06)'" onmouseout="this.style.background='transparent'">
+            + Add price row
+          </button>
+          <p style="font-size:12px;color:#94a3b8;margin-top:12px;padding:10px 14px;background:#f8fafc;border-radius:10px">
+            💳 In a future update you'll be able to collect card payments directly in the app.
+          </p>
         </div>
 
         <!-- Contact & Payment -->
@@ -349,12 +358,8 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════════
-       REQUESTS TAB
-  ════════════════════════════════════════════════════ -->
+  <!-- ════════════════ REQUESTS TAB ════════════════ -->
   <div id="requests-tab" style="display:none" class="fade-in">
-
-    <!-- Status filters -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
       <button class="tab-btn active"   id="rf-all"       onclick="filterRequests('all')">All</button>
       <button class="tab-btn inactive" id="rf-pending"   onclick="filterRequests('pending')">🟡 Pending</button>
@@ -362,11 +367,7 @@
       <button class="tab-btn inactive" id="rf-completed" onclick="filterRequests('completed')">✓ Completed</button>
       <button class="tab-btn inactive" id="rf-declined"  onclick="filterRequests('declined')">✗ Declined</button>
     </div>
-
-    <!-- Request list -->
-    <div id="requests-list" style="display:flex;flex-direction:column;gap:12px">
-      <!-- Populated by JS -->
-    </div>
+    <div id="requests-list" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="requests-empty" style="display:none;text-align:center;padding:60px 20px;color:#94a3b8">
       <div style="font-size:40px;margin-bottom:12px">📭</div>
       <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No ride requests yet</div>
@@ -375,33 +376,19 @@
     <div id="requests-loading" style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">Loading requests…</div>
   </div>
 
-  <!-- ════════════════════════════════════════════════════
-       RIDERS TAB
-  ════════════════════════════════════════════════════ -->
+  <!-- ════════════════ RIDERS TAB ════════════════ -->
   <div id="riders-tab" style="display:none" class="fade-in">
-
-    <!-- Search bar -->
     <div style="margin-bottom:16px">
-      <input
-        type="search"
-        id="riders-search"
-        class="input-f"
+      <input type="search" id="riders-search" class="input-f"
         placeholder="🔍 Search riders by name or phone…"
-        oninput="renderRiders()"
-        style="max-width:380px"
-      >
+        oninput="renderRiders()" style="max-width:380px">
     </div>
-
-    <!-- Rider cards -->
     <div id="riders-list" style="display:flex;flex-direction:column;gap:12px"></div>
-
-    <!-- Empty state -->
     <div id="riders-empty" style="display:none;text-align:center;padding:60px 20px;color:#94a3b8">
       <div style="font-size:40px;margin-bottom:12px">👥</div>
       <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No riders yet</div>
       <div style="font-size:14px">Confirmed rides will appear here</div>
     </div>
-
   </div>
 
 </div>
@@ -414,19 +401,17 @@
 <script src="firebase-config.js"></script>
 <script>
 
-let currentUser   = null;
-let allRequests   = [];
-let allRiders     = [];
-let activeFilter  = 'all';
-let requestsListener = null;
-let ridersListener   = null;
+let currentUser          = null;
+let currentDriverProfile = null;
+let allRequests          = [];
+let allRiders            = [];
+let activeFilter         = 'all';
+let requestsListener     = null;
+let ridersListener       = null;
 
 // ── Auth guard ─────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
-  }
+  if (!user) { window.location.href = 'login.html'; return; }
   currentUser = user;
   await loadProfile();
   listenToRequests();
@@ -469,6 +454,7 @@ async function loadProfile() {
     const snap = await db.collection('drivers').doc(currentUser.uid).get();
     if (!snap.exists) {
       document.getElementById('setup-prompt').style.display = 'flex';
+      populatePricing(null); // load defaults
       return;
     }
     populateProfile(snap.data());
@@ -478,22 +464,22 @@ async function loadProfile() {
 }
 
 function populateProfile(d) {
-  document.getElementById('p-name').value    = d.name        || '';
-  document.getElementById('p-biz').value     = d.businessName|| '';
-  document.getElementById('p-city').value    = d.city        || '';
-  document.getElementById('p-vehicle').value = d.vehicle     || '';
-  document.getElementById('p-tagline').value = d.tagline     || '';
-  document.getElementById('p-phone').value   = d.phone       || '';
-  document.getElementById('p-venmo').value   = d.venmo       || '';
-  document.getElementById('p-cash').value    = d.cashapp     || '';
-  document.getElementById('p-zelle').value   = d.zelle       || '';
-  document.getElementById('p-logo').value    = d.logoUrl     || '';
+  currentDriverProfile = d;
+
+  document.getElementById('p-name').value    = d.name         || '';
+  document.getElementById('p-biz').value     = d.businessName || '';
+  document.getElementById('p-city').value    = d.city         || '';
+  document.getElementById('p-vehicle').value = d.vehicle      || '';
+  document.getElementById('p-tagline').value = d.tagline      || '';
+  document.getElementById('p-phone').value   = d.phone        || '';
+  document.getElementById('p-venmo').value   = d.venmo        || '';
+  document.getElementById('p-cash').value    = d.cashapp      || '';
+  document.getElementById('p-zelle').value   = d.zelle        || '';
+  document.getElementById('p-logo').value    = d.logoUrl      || '';
   if (d.logoUrl) showLogoPreview(d.logoUrl);
 
   const svcs = d.services || [];
-  document.querySelectorAll('.svc-check').forEach(cb => {
-    cb.checked = svcs.includes(cb.value);
-  });
+  document.querySelectorAll('.svc-check').forEach(cb => { cb.checked = svcs.includes(cb.value); });
 
   if (d.accentColor) {
     document.getElementById('p-color').value  = d.accentColor;
@@ -505,8 +491,9 @@ function populateProfile(d) {
     });
   }
 
-  document.getElementById('nav-biz-name').textContent = d.businessName || '';
+  populatePricing(d.pricing);
 
+  document.getElementById('nav-biz-name').textContent = d.businessName || '';
   const link = bookingUrl(currentUser.uid);
   document.getElementById('link-display').textContent = link;
   document.getElementById('nav-view-page').href = link;
@@ -514,14 +501,59 @@ function populateProfile(d) {
   document.getElementById('setup-prompt').style.display = 'none';
 }
 
+// ── Pricing management ─────────────────────────────────────────────
+const DEFAULT_PRICING = [
+  { service: 'Airport Run',  price: 55 },
+  { service: 'General Ride', price: 35 },
+  { service: 'Corporate',    price: 65 },
+  { service: 'Custom',       price: 0  },
+];
+
+function populatePricing(pricing) {
+  document.getElementById('pricing-rows').innerHTML = '';
+  const rows = (pricing && pricing.length > 0) ? pricing : DEFAULT_PRICING;
+  rows.forEach(r => addPriceRow(r.service, r.price));
+}
+
+function addPriceRow(service = '', price = '') {
+  const container = document.getElementById('pricing-rows');
+  const row = document.createElement('div');
+  row.className = 'price-row';
+  row.innerHTML = `
+    <input type="text" class="input-f" placeholder="Service name (e.g. Airport Run)"
+      value="${escHtml(String(service))}" style="flex:1;min-width:0">
+    <div style="display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;flex-shrink:0;width:110px">
+      <span style="padding:10px 10px;font-size:14px;color:#94a3b8;background:#f8fafc;border-right:1px solid #e2e8f0">$</span>
+      <input type="number" class="fare-input" placeholder="0" min="0" value="${price}"
+        style="flex:1;padding:10px 8px">
+    </div>
+    <button type="button" onclick="this.closest('.price-row').remove()"
+      style="background:#FEE2E2;color:#EF4444;border:none;border-radius:9px;padding:8px 11px;cursor:pointer;font-size:15px;flex-shrink:0;line-height:1">🗑</button>
+  `;
+  container.appendChild(row);
+}
+
+function getPricingData() {
+  return Array.from(document.querySelectorAll('.price-row')).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { service: inputs[0].value.trim(), price: parseFloat(inputs[1].value) || 0 };
+  }).filter(r => r.service);
+}
+
+function getLookupFare(serviceName) {
+  if (!serviceName || !currentDriverProfile?.pricing) return '';
+  const match = currentDriverProfile.pricing.find(p => p.service === serviceName);
+  return match ? match.price : '';
+}
+
 // ── Save profile ───────────────────────────────────────────────────
 async function saveProfile(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = 'Saving…';
 
   const services = Array.from(document.querySelectorAll('.svc-check:checked')).map(c => c.value);
+  const pricing  = getPricingData();
 
   const data = {
     name:           document.getElementById('p-name').value.trim(),
@@ -537,11 +569,13 @@ async function saveProfile(e) {
     accentColor:    document.getElementById('p-color').value,
     accentColorDark:document.getElementById('p-colord').value,
     services,
-    updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
+    pricing,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   try {
     await db.collection('drivers').doc(currentUser.uid).set(data, { merge: true });
+    currentDriverProfile = { ...currentDriverProfile, ...data };
 
     document.getElementById('nav-biz-name').textContent = data.businessName;
     const link = bookingUrl(currentUser.uid);
@@ -553,12 +587,10 @@ async function saveProfile(e) {
     const toast = document.getElementById('save-toast');
     toast.style.display = 'block';
     setTimeout(() => { toast.style.display = 'none'; }, 4000);
-
   } catch (err) {
     alert('Error saving profile: ' + err.message);
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Profile';
+    btn.disabled = false; btn.textContent = 'Save Profile';
   }
 }
 
@@ -566,9 +598,8 @@ async function saveProfile(e) {
 function copyBookingLink() {
   copyToClipboard(bookingUrl(currentUser.uid), document.getElementById('copy-link-btn'));
 }
-
 function shareOnWhatsApp() {
-  const biz  = document.getElementById('p-biz').value  || 'My driver page';
+  const biz  = document.getElementById('p-biz').value || 'My driver page';
   const link = bookingUrl(currentUser.uid);
   openWhatsApp('', `Hey! Book rides with ${biz} directly — no Uber fees, no surge.\n\n📲 ${link}`);
 }
@@ -592,15 +623,10 @@ function listenToRequests() {
 function updatePendingBadge() {
   const pending = allRequests.filter(r => r.status === 'pending').length;
   const badge = document.getElementById('pending-badge');
-  if (pending > 0) {
-    badge.textContent = pending;
-    badge.style.display = 'inline';
-  } else {
-    badge.style.display = 'none';
-  }
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? 'inline' : 'none';
 }
 
-// ── Filter & render requests ───────────────────────────────────────
 function filterRequests(filter) {
   activeFilter = filter;
   ['all','pending','confirmed','completed','declined'].forEach(f => {
@@ -612,22 +638,15 @@ function filterRequests(filter) {
 }
 
 function renderRequests() {
-  const list = document.getElementById('requests-list');
+  const list  = document.getElementById('requests-list');
   const empty = document.getElementById('requests-empty');
-
-  const filtered = activeFilter === 'all'
-    ? allRequests
-    : allRequests.filter(r => r.status === activeFilter);
-
-  if (filtered.length === 0) {
-    list.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  const filtered = activeFilter === 'all' ? allRequests : allRequests.filter(r => r.status === activeFilter);
+  if (filtered.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   list.innerHTML = filtered.map(r => requestCard(r)).join('');
 }
 
+// ── Request card ───────────────────────────────────────────────────
 function requestCard(r) {
   const statusLabels = {
     pending:   '<span class="status-pill pill-pending">🟡 Pending</span>',
@@ -640,30 +659,64 @@ function requestCard(r) {
   const rideDate = r.date ? fmtDate(r.date) : '—';
   const rideTime = r.time ? fmtTime(r.time) : '—';
 
+  // Service + fare meta row
+  const metaParts = [];
+  if (r.selectedService) metaParts.push(`<span style="background:#EDE9FE;color:#6D28D9;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600">${escHtml(r.selectedService)}</span>`);
+  if (r.estimatedFare > 0) metaParts.push(`<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600">est. $${r.estimatedFare}</span>`);
+  if (r.confirmedFare > 0) metaParts.push(`<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700">confirmed $${r.confirmedFare}</span>`);
+  if (r.distanceMiles > 0) metaParts.push(`<span style="color:#94a3b8;font-size:12px">${r.distanceMiles.toFixed(1)} mi</span>`);
+  const metaRow = metaParts.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${metaParts.join('')}</div>` : '';
+
+  // View Route link
+  const routeLink = (r.pickup && r.dropoff)
+    ? `<a href="https://www.google.com/maps/dir/${encodeURIComponent(r.pickup)}/${encodeURIComponent(r.dropoff)}" target="_blank"
+         style="font-size:12px;font-weight:600;color:#0369A1;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+         🗺 View Route
+       </a>`
+    : '';
+
+  // Actions
   let actions = '';
   if (r.status === 'pending') {
+    const baseFare = r.estimatedFare || getLookupFare(r.selectedService) || '';
     actions = `
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <button class="action-btn" onclick="updateStatus('${r.id}','confirmed')"
-          style="background:#D1FAE5;color:#065F46">✓ Confirm</button>
-        <button class="action-btn" onclick="updateStatus('${r.id}','declined')"
-          style="background:#FEE2E2;color:#991B1B">✗ Decline</button>
-        <button class="action-btn" onclick="replyWhatsApp('${r.id}')"
-          style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+      <div style="margin-top:14px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:7px 12px">
+            <span style="font-size:13px;color:#64748b;white-space:nowrap">Confirm at</span>
+            <span style="font-size:14px;font-weight:600;color:#0f172a">$</span>
+            <input type="number" class="fare-input" id="fare-${r.id}" value="${baseFare}" placeholder="0" min="0"
+              style="width:60px;font-size:15px;padding:0">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="action-btn" onclick="confirmRide('${r.id}')" style="background:#D1FAE5;color:#065F46">✓ Confirm</button>
+          <button class="action-btn" onclick="updateStatus('${r.id}','declined')" style="background:#FEE2E2;color:#991B1B">✗ Decline</button>
+          <button class="action-btn" onclick="replyWhatsApp('${r.id}')" style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+        </div>
       </div>`;
   } else if (r.status === 'confirmed') {
+    const fare    = r.confirmedFare || r.estimatedFare || null;
+    const venmo   = currentDriverProfile?.venmo;
+    const cashapp = currentDriverProfile?.cashapp;
+    const payBtns = [];
+    if (venmo)   payBtns.push(`<button class="action-btn" onclick="openVenmoRequest('${r.id}')" style="background:#DBEAFE;color:#1D4ED8">💰 Send Venmo Request</button>`);
+    if (cashapp) payBtns.push(`<button class="action-btn" onclick="openCashAppRequest('${r.id}')" style="background:#DCFCE7;color:#15803D">💰 Send CashApp Request</button>`);
+    payBtns.push(`<button class="action-btn" onclick="copyPaymentMsg('${r.id}',this)" style="background:#F1F5F9;color:#475569">📋 Copy payment message</button>`);
+
     actions = `
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <button class="action-btn" onclick="updateStatus('${r.id}','completed')"
-          style="background:#E2E8F0;color:#475569">✓ Mark Complete</button>
-        <button class="action-btn" onclick="replyWhatsApp('${r.id}')"
-          style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+        <button class="action-btn" onclick="updateStatus('${r.id}','completed')" style="background:#E2E8F0;color:#475569">✓ Mark Complete</button>
+        <button class="action-btn" onclick="replyWhatsApp('${r.id}')" style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        ${payBtns.join('')}
       </div>`;
   }
 
   return `
     <div class="req-card border-${r.status || 'pending'}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
         <div>
           <div style="font-size:15px;font-weight:700;color:#0f172a">${escHtml(r.riderName || '—')}</div>
           <div style="font-size:13px;color:#64748b;margin-top:2px">${escHtml(r.riderPhone || '—')}</div>
@@ -671,8 +724,10 @@ function requestCard(r) {
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           ${pill}
           <span style="font-size:11px;color:#94a3b8">${dt}</span>
+          ${routeLink}
         </div>
       </div>
+      ${metaRow}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
         <div style="background:#f8fafc;border-radius:10px;padding:10px">
           <div style="color:#94a3b8;font-size:11px;font-weight:600;margin-bottom:3px">PICKUP</div>
@@ -697,25 +752,106 @@ function requestCard(r) {
   `;
 }
 
-// ── Update request status ──────────────────────────────────────────
+// ── Confirm ride with price ────────────────────────────────────────
+async function confirmRide(id) {
+  const priceInput = document.getElementById(`fare-${id}`);
+  const confirmedFare = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
+  try {
+    await db.collection('rideRequests').doc(id).update({ status: 'confirmed', confirmedFare });
+    upsertRider(id);
+    const r = allRequests.find(x => x.id === id);
+    if (r && currentDriverProfile) sendPaymentWhatsApp(r, confirmedFare);
+  } catch (err) {
+    alert('Could not confirm ride: ' + err.message);
+  }
+}
+
+// ── Simple status update (decline / complete) ──────────────────────
 async function updateStatus(id, status) {
   try {
     await db.collection('rideRequests').doc(id).update({ status });
-    if (status === 'confirmed') upsertRider(id);
   } catch (err) {
     alert('Could not update status: ' + err.message);
   }
+}
+
+// ── Payment: send WhatsApp message on confirm ──────────────────────
+function sendPaymentWhatsApp(r, fare) {
+  if (!currentDriverProfile?.phone) return;
+  const venmo   = currentDriverProfile.venmo;
+  const cashapp = currentDriverProfile.cashapp;
+  const price   = fare || r.estimatedFare || '—';
+  const dateStr = r.date ? fmtDate(r.date) : '—';
+  const note    = encodeURIComponent(`Ride ${dateStr}`);
+
+  let payLinks = '';
+  if (venmo)   payLinks += `\nVenmo @${venmo}: venmo://paycharge?txn=pay&recipients=${venmo}&amount=${price}&note=${note}`;
+  if (cashapp) payLinks += `\nCashApp $${cashapp}: https://cash.app/$${cashapp}/${price}`;
+
+  const msg =
+    `Hi ${r.riderName}! Your ride on ${dateStr} is confirmed 🚗\n` +
+    `Total: $${price}` +
+    (payLinks ? `\n\nPay via:${payLinks}` : '') +
+    `\n\nSee you soon!`;
+
+  openWhatsApp(r.riderPhone, msg);
+}
+
+// ── Payment: Venmo deep link ───────────────────────────────────────
+function openVenmoRequest(id) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r) return;
+  const venmo = currentDriverProfile?.venmo;
+  if (!venmo) { alert('No Venmo username set in your profile.'); return; }
+  const price = r.confirmedFare || r.estimatedFare || '';
+  const note  = encodeURIComponent(`Ride on ${r.date || ''} - ${r.pickup || ''} to ${r.dropoff || ''}`);
+  window.open(`venmo://paycharge?txn=pay&recipients=${venmo}&amount=${price}&note=${note}`, '_blank');
+}
+
+// ── Payment: CashApp deep link ─────────────────────────────────────
+function openCashAppRequest(id) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r) return;
+  const cashapp = currentDriverProfile?.cashapp;
+  if (!cashapp) { alert('No CashApp tag set in your profile.'); return; }
+  const price = r.confirmedFare || r.estimatedFare || '';
+  window.open(`https://cash.app/$${cashapp}/${price}`, '_blank');
+}
+
+// ── Payment: copy payment message ─────────────────────────────────
+function copyPaymentMsg(id, btn) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r) return;
+  const venmo   = currentDriverProfile?.venmo;
+  const cashapp = currentDriverProfile?.cashapp;
+  const price   = r.confirmedFare || r.estimatedFare || '—';
+  const dateStr = r.date ? fmtDate(r.date) : '—';
+
+  let payPart = '';
+  if (venmo)   payPart += ` Pay via Venmo @${venmo}: venmo://paycharge?txn=pay&recipients=${venmo}&amount=${price}&note=${encodeURIComponent('Ride '+dateStr)}`;
+  if (cashapp) payPart += ` or CashApp $${cashapp}: https://cash.app/$${cashapp}/${price}`;
+
+  const msg = `Hi ${r.riderName}! Your ride on ${dateStr} is confirmed 🚗 Total: $${price}.${payPart}`;
+
+  navigator.clipboard.writeText(msg).then(() => {
+    if (btn) { const o = btn.innerHTML; btn.innerHTML = '✓ Copied!'; setTimeout(() => { btn.innerHTML = o; }, 2200); }
+  }).catch(() => { alert(msg); });
+}
+
+// ── Reply via WhatsApp ─────────────────────────────────────────────
+function replyWhatsApp(id) {
+  const r = allRequests.find(req => req.id === id);
+  if (!r) return;
+  const msg = `Hi ${r.riderName}, this is your driver. Regarding your ride request on ${fmtDate(r.date)} at ${fmtTime(r.time)} from ${r.pickup} to ${r.dropoff} — `;
+  openWhatsApp(r.riderPhone, msg);
 }
 
 // ── Upsert rider on confirm ────────────────────────────────────────
 async function upsertRider(requestId) {
   const r = allRequests.find(req => req.id === requestId);
   if (!r || !r.riderPhone) return;
-
-  // Stable doc ID scoped per driver+phone — no cross-driver collisions
   const riderId = btoa(currentUser.uid + ':' + r.riderPhone).replace(/\//g, '-');
   const ref = db.collection('riders').doc(riderId);
-
   try {
     const snap = await ref.get();
     if (snap.exists) {
@@ -727,19 +863,12 @@ async function upsertRider(requestId) {
       });
     } else {
       await ref.set({
-        driverId:   currentUser.uid,
-        name:       r.riderName  || '',
-        phone:      r.riderPhone || '',
-        totalRides: 1,
-        lastRideAt: firebase.firestore.FieldValue.serverTimestamp(),
-        notes:      '',
-        tags:       [],
-        createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+        driverId: currentUser.uid, name: r.riderName || '', phone: r.riderPhone || '',
+        totalRides: 1, lastRideAt: firebase.firestore.FieldValue.serverTimestamp(),
+        notes: '', tags: [], createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
-  } catch (err) {
-    console.error('upsertRider:', err);
-  }
+  } catch (err) { console.error('upsertRider:', err); }
 }
 
 // ── Real-time riders listener ──────────────────────────────────────
@@ -749,12 +878,9 @@ function listenToRiders() {
     .onSnapshot(snapshot => {
       allRiders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       renderRiders();
-    }, err => {
-      console.error('riders listener:', err);
-    });
+    }, err => { console.error('riders listener:', err); });
 }
 
-// ── Render riders ──────────────────────────────────────────────────
 function renderRiders() {
   const list  = document.getElementById('riders-list');
   const empty = document.getElementById('riders-empty');
@@ -762,48 +888,32 @@ function renderRiders() {
 
   if (allRiders.length === 0) {
     list.innerHTML = '';
-    empty.innerHTML = `
-      <div style="font-size:40px;margin-bottom:12px">👥</div>
-      <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No riders yet</div>
-      <div style="font-size:14px">Confirmed rides will appear here</div>
-    `;
-    empty.style.display = 'block';
-    return;
+    empty.innerHTML = `<div style="font-size:40px;margin-bottom:12px">👥</div><div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No riders yet</div><div style="font-size:14px">Confirmed rides will appear here</div>`;
+    empty.style.display = 'block'; return;
   }
-
   const filtered = allRiders.filter(r => {
     if (!query) return true;
-    return (r.name || '').toLowerCase().includes(query) ||
-           (r.phone || '').includes(query);
+    return (r.name || '').toLowerCase().includes(query) || (r.phone || '').includes(query);
   });
-
   if (filtered.length === 0) {
     list.innerHTML = '';
-    empty.innerHTML = `
-      <div style="font-size:32px;margin-bottom:12px">🔍</div>
-      <div style="font-size:15px;font-weight:600;color:#475569">No riders match "${escHtml(query)}"</div>
-    `;
-    empty.style.display = 'block';
-    return;
+    empty.innerHTML = `<div style="font-size:32px;margin-bottom:12px">🔍</div><div style="font-size:15px;font-weight:600;color:#475569">No riders match "${escHtml(query)}"</div>`;
+    empty.style.display = 'block'; return;
   }
-
   empty.style.display = 'none';
   list.innerHTML = filtered.map(r => riderCard(r)).join('');
 }
 
-// ── Rider card ─────────────────────────────────────────────────────
 const RIDER_TAGS = ['VIP', 'Airport Regular', 'Corporate', 'Regular'];
 
 function riderCard(r) {
   const tags     = r.tags || [];
   const count    = r.totalRides || 1;
   const lastRide = r.lastRideAt ? fmtDateTime(r.lastRideAt) : '—';
-
   const tagsHtml = RIDER_TAGS.map(tag => {
     const active = tags.includes(tag);
     return `<button class="tag-chip ${active ? 'tag-active' : 'tag-inactive'}" onclick="toggleTag('${r.id}','${escHtml(tag)}',this)">${escHtml(tag)}</button>`;
   }).join('');
-
   return `
     <div class="rider-card">
       <div style="display:flex;align-items:flex-start;gap:14px">
@@ -817,70 +927,37 @@ function riderCard(r) {
           <div style="font-size:11px;color:#94a3b8;margin-top:2px">Last ride: ${lastRide}</div>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:2px">
-        ${tagsHtml}
-      </div>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:2px">${tagsHtml}</div>
       <div style="margin-top:12px">
-        <textarea
-          class="input-f"
-          rows="2"
-          style="resize:none;font-size:13px"
+        <textarea class="input-f" rows="2" style="resize:none;font-size:13px"
           placeholder="Add notes about this rider…"
-          onblur="saveRiderNotes('${r.id}', this.value)"
-        >${escHtml(r.notes || '')}</textarea>
+          onblur="saveRiderNotes('${r.id}', this.value)">${escHtml(r.notes || '')}</textarea>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        <button class="action-btn" onclick="whatsAppRider('${r.id}')"
-          style="background:#D4F6E4;color:#065F46">💬 WhatsApp</button>
-        <button class="action-btn" onclick="bookAgainRider('${r.id}')"
-          style="background:#E0F2FE;color:#0369A1">🔗 Book Again</button>
+        <button class="action-btn" onclick="whatsAppRider('${r.id}')" style="background:#D4F6E4;color:#065F46">💬 WhatsApp</button>
+        <button class="action-btn" onclick="bookAgainRider('${r.id}')" style="background:#E0F2FE;color:#0369A1">🔗 Book Again</button>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-// ── Rider actions ──────────────────────────────────────────────────
 async function saveRiderNotes(id, value) {
-  try {
-    await db.collection('riders').doc(id).update({ notes: value });
-  } catch (err) {
-    console.error('saveRiderNotes:', err);
-  }
+  try { await db.collection('riders').doc(id).update({ notes: value }); }
+  catch (err) { console.error('saveRiderNotes:', err); }
 }
-
 function toggleTag(id, tag, btn) {
-  const r = allRiders.find(x => x.id === id);
-  if (!r) return;
-  const tags = [...(r.tags || [])];
-  const idx  = tags.indexOf(tag);
-  if (idx >= 0) tags.splice(idx, 1);
-  else          tags.push(tag);
-  r.tags = tags; // optimistic local update
-  btn.className = `tag-chip ${tags.includes(tag) ? 'tag-active' : 'tag-inactive'}`;
-  db.collection('riders').doc(id).update({ tags }).catch(err => {
-    console.error('toggleTag:', err);
-  });
+  const r = allRiders.find(x => x.id === id); if (!r) return;
+  const tags = [...(r.tags || [])]; const idx = tags.indexOf(tag);
+  if (idx >= 0) tags.splice(idx, 1); else tags.push(tag);
+  r.tags = tags; btn.className = `tag-chip ${tags.includes(tag) ? 'tag-active' : 'tag-inactive'}`;
+  db.collection('riders').doc(id).update({ tags }).catch(err => console.error('toggleTag:', err));
 }
-
 function whatsAppRider(id) {
-  const r = allRiders.find(x => x.id === id);
-  if (!r) return;
+  const r = allRiders.find(x => x.id === id); if (!r) return;
   openWhatsApp(r.phone, `Hi ${r.name}, ready to book your next ride with me?`);
 }
-
 function bookAgainRider(id) {
-  const r = allRiders.find(x => x.id === id);
-  if (!r) return;
-  const url = `${bookingUrl(currentUser.uid)}&name=${encodeURIComponent(r.name)}&phone=${encodeURIComponent(r.phone)}`;
-  window.open(url, '_blank');
-}
-
-// ── Reply via WhatsApp ────────────────────────────────────────────
-function replyWhatsApp(id) {
-  const r = allRequests.find(req => req.id === id);
-  if (!r) return;
-  const msg = `Hi ${r.riderName}, this is your driver. Regarding your ride request on ${fmtDate(r.date)} at ${fmtTime(r.time)} from ${r.pickup} to ${r.dropoff} — `;
-  openWhatsApp(r.riderPhone, msg);
+  const r = allRiders.find(x => x.id === id); if (!r) return;
+  window.open(`${bookingUrl(currentUser.uid)}&name=${encodeURIComponent(r.name)}&phone=${encodeURIComponent(r.phone)}`, '_blank');
 }
 
 // ── Utility ───────────────────────────────────────────────────────
@@ -890,79 +967,45 @@ function escHtml(str) {
 
 // ── Logo upload ────────────────────────────────────────────────────
 function showLogoPreview(url) {
-  const img   = document.getElementById('logo-preview-img');
-  const icon  = document.getElementById('logo-preview-icon');
-  const rmBtn = document.getElementById('logo-remove-btn');
-  img.src = url;
-  img.style.display  = 'block';
-  icon.style.display = 'none';
-  rmBtn.style.display = 'inline';
+  document.getElementById('logo-preview-img').src = url;
+  document.getElementById('logo-preview-img').style.display = 'block';
+  document.getElementById('logo-preview-icon').style.display = 'none';
+  document.getElementById('logo-remove-btn').style.display = 'inline';
 }
-
 function hideLogoPreview() {
-  const img   = document.getElementById('logo-preview-img');
-  const icon  = document.getElementById('logo-preview-icon');
-  const rmBtn = document.getElementById('logo-remove-btn');
-  img.src = '';
-  img.style.display  = 'none';
-  icon.style.display = 'block';
-  rmBtn.style.display = 'none';
+  document.getElementById('logo-preview-img').src = '';
+  document.getElementById('logo-preview-img').style.display = 'none';
+  document.getElementById('logo-preview-icon').style.display = 'block';
+  document.getElementById('logo-remove-btn').style.display = 'none';
 }
-
 function handleLogoFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  if (file.size > 2 * 1024 * 1024) {
-    alert('Logo must be under 2 MB. Please choose a smaller image.');
-    input.value = '';
-    return;
-  }
-
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { alert('Logo must be under 2 MB.'); input.value = ''; return; }
   const reader = new FileReader();
   reader.onload = e => showLogoPreview(e.target.result);
   reader.readAsDataURL(file);
-
   uploadLogo(file);
 }
-
 async function uploadLogo(file) {
   if (!currentUser) return;
-
   const ext  = file.name.split('.').pop().toLowerCase() || 'jpg';
   const ref  = storage.ref(`logos/${currentUser.uid}/logo.${ext}`);
-
-  const progressWrap = document.getElementById('logo-progress-wrap');
-  const progressBar  = document.getElementById('logo-progress-bar');
-  const progressText = document.getElementById('logo-progress-text');
-
-  progressWrap.style.display = 'block';
-  progressBar.style.width    = '0%';
-  progressText.textContent   = 'Uploading…';
-
+  const pw   = document.getElementById('logo-progress-wrap');
+  const pb   = document.getElementById('logo-progress-bar');
+  const pt   = document.getElementById('logo-progress-text');
+  pw.style.display = 'block'; pb.style.width = '0%'; pt.textContent = 'Uploading…';
   const task = ref.put(file, { contentType: file.type });
-
   task.on('state_changed',
-    snapshot => {
-      const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-      progressBar.style.width  = pct + '%';
-      progressText.textContent = `Uploading… ${pct}%`;
-    },
-    err => {
-      progressWrap.style.display = 'none';
-      console.error('Logo upload failed:', err);
-      alert('Logo upload failed: ' + err.message);
-    },
+    s => { const p = Math.round((s.bytesTransferred/s.totalBytes)*100); pb.style.width = p+'%'; pt.textContent = `Uploading… ${p}%`; },
+    err => { pw.style.display = 'none'; alert('Logo upload failed: ' + err.message); },
     async () => {
-      const downloadUrl = await task.snapshot.ref.getDownloadURL();
-      document.getElementById('p-logo').value = downloadUrl;
-      progressBar.style.width  = '100%';
-      progressText.textContent = '✓ Logo uploaded!';
-      setTimeout(() => { progressWrap.style.display = 'none'; }, 2000);
+      const url = await task.snapshot.ref.getDownloadURL();
+      document.getElementById('p-logo').value = url;
+      pb.style.width = '100%'; pt.textContent = '✓ Logo uploaded!';
+      setTimeout(() => { pw.style.display = 'none'; }, 2000);
     }
   );
 }
-
 function removeLogo() {
   document.getElementById('p-logo').value = '';
   document.getElementById('logo-file-input').value = '';
