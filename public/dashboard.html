@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DriverConnect — Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
@@ -385,6 +386,28 @@
           </div>
         </div>
 
+        <!-- Calendar Integration -->
+        <div>
+          <div class="section-label">Calendar Integration</div>
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:16px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                  <span style="font-size:20px">📅</span>
+                  <span style="font-size:14px;font-weight:700;color:#0f172a">Google Calendar</span>
+                </div>
+                <div id="cal-connect-status" style="font-size:12px;color:#64748b;line-height:1.5">
+                  Not connected — confirmed rides won't auto-add to your calendar
+                </div>
+              </div>
+              <button type="button" id="cal-connect-btn" onclick="connectGoogleCalendar()"
+                style="flex-shrink:0;padding:10px 20px;background:#4285F4;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap">
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Brand Color -->
         <div>
           <div class="section-label">Brand Color</div>
@@ -653,6 +676,7 @@ function populateProfile(d) {
   }
 
   populatePricing(d.pricing);
+  _updateCalConnectUI(!!d.calendarConnected);
 
   document.getElementById('nav-biz-name').textContent = d.businessName || '';
   const link = bookingUrl(currentUser.uid);
@@ -991,7 +1015,7 @@ async function confirmRide(id) {
     await db.collection('rideRequests').doc(id).update({ status: 'confirmed', confirmedFare });
     upsertRider(id);
     if (r && currentDriverProfile) sendPaymentWhatsApp(r, confirmedFare);
-    if (r) showCalModal(r);
+    if (r) { const pushed = await autoPushToGCal(r); if (!pushed) showCalModal(r); }
   } catch (err) {
     alert('Could not confirm ride: ' + err.message);
   }
@@ -1004,7 +1028,7 @@ async function updateStatus(id, status) {
     if (status === 'completed') settleRidePrice(id); // fire-and-forget
     if (status === 'confirmed') {
       const booking = allRequests.find(r => r.id === id);
-      if (booking) showCalModal(booking);
+      if (booking) { const pushed = await autoPushToGCal(booking); if (!pushed) showCalModal(booking); }
     }
   } catch (err) {
     alert('Could not update status: ' + err.message);
@@ -1543,7 +1567,135 @@ function downloadQR() {
   link.click();
 }
 
-// ── Calendar Integration ──────────────────────────────────────────
+// ── Google Calendar Auto-Push ─────────────────────────────────────
+// Client ID: Firebase Console → Authentication → Sign-in method → Google → Web client ID
+const GOOGLE_CAL_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+let _gcalTokenClient  = null;
+let _gcalTokenResolve = null;
+
+function _initGCalTokenClient() {
+  if (_gcalTokenClient || typeof google === 'undefined') return;
+  _gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CAL_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+    callback: _handleGCalToken,
+  });
+}
+
+function _handleGCalToken(resp) {
+  if (_gcalTokenResolve) {
+    _gcalTokenResolve(resp.error ? null : resp.access_token);
+    _gcalTokenResolve = null;
+  }
+}
+
+function _getGCalToken(prompt = '') {
+  return new Promise(resolve => {
+    _initGCalTokenClient();
+    if (!_gcalTokenClient) { resolve(null); return; }
+    _gcalTokenResolve = resolve;
+    _gcalTokenClient.requestAccessToken({ prompt });
+  });
+}
+
+async function connectGoogleCalendar() {
+  const btn = document.getElementById('cal-connect-btn');
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  const token = await _getGCalToken('consent');
+  btn.disabled = false;
+  if (!token) { btn.textContent = prev; return; }
+  await db.collection('drivers').doc(currentUser.uid).set({ calendarConnected: true }, { merge: true });
+  currentDriverProfile = { ...currentDriverProfile, calendarConnected: true };
+  _updateCalConnectUI(true);
+  showToast('📅 Google Calendar connected! Rides will now auto-add.');
+}
+
+async function disconnectGoogleCalendar() {
+  if (!confirm('Disconnect Google Calendar?\nConfirmed rides will no longer auto-add to your calendar.')) return;
+  await db.collection('drivers').doc(currentUser.uid).set({ calendarConnected: false }, { merge: true });
+  currentDriverProfile = { ...currentDriverProfile, calendarConnected: false };
+  _updateCalConnectUI(false);
+}
+
+function _updateCalConnectUI(connected) {
+  const btn    = document.getElementById('cal-connect-btn');
+  const status = document.getElementById('cal-connect-status');
+  if (!btn || !status) return;
+  if (connected) {
+    btn.textContent = 'Disconnect';
+    btn.style.background = '#f1f5f9'; btn.style.color = '#475569';
+    btn.onclick = disconnectGoogleCalendar;
+    status.innerHTML = '✅ Connected — confirmed rides auto-add to Google Calendar';
+    status.style.color = '#059669';
+  } else {
+    btn.textContent = 'Connect';
+    btn.style.background = '#4285F4'; btn.style.color = '#fff';
+    btn.onclick = connectGoogleCalendar;
+    status.textContent = "Not connected — confirmed rides won't auto-add to your calendar";
+    status.style.color = '#64748b';
+  }
+}
+
+async function autoPushToGCal(booking) {
+  if (!currentDriverProfile?.calendarConnected) return false;
+  const token = await _getGCalToken(''); // silent — no popup if Google session is active
+  if (!token) {
+    // Google session expired — mark as disconnected, fall back to manual modal
+    await db.collection('drivers').doc(currentUser.uid).set({ calendarConnected: false }, { merge: true });
+    currentDriverProfile = { ...currentDriverProfile, calendarConnected: false };
+    _updateCalConnectUI(false);
+    return false;
+  }
+  return _pushEventToGCal(token, booking);
+}
+
+function _toISODateTime(s) {
+  return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(9,11)}:${s.slice(11,13)}:${s.slice(13,15)}`;
+}
+
+async function _pushEventToGCal(token, booking) {
+  const { start, end } = _calDates(booking.date, booking.time);
+  const tz   = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const desc = `Pickup: ${booking.pickup || '—'}\nDropoff: ${booking.dropoff || '—'}\nRider: ${booking.riderName || '—'} · ${booking.riderPhone || '—'}\nPassengers: ${booking.passengers || '1'}`
+             + (booking.notes ? `\nNotes: ${booking.notes}` : '');
+  const event = {
+    summary:  `Ride: ${booking.riderName || 'Rider'}`,
+    location: booking.pickup || '',
+    description: desc,
+    start: { dateTime: _toISODateTime(start), timeZone: tz },
+    end:   { dateTime: _toISODateTime(end),   timeZone: tz },
+  };
+  try {
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+    if (!res.ok) throw new Error((await res.json()).error?.message || res.status);
+    showToast('📅 Added to Google Calendar');
+    return true;
+  } catch (e) {
+    console.error('GCal push failed:', e);
+    return false;
+  }
+}
+
+function showToast(msg, ms = 3500) {
+  let t = document.getElementById('gcal-toast');
+  if (!t) {
+    t = Object.assign(document.createElement('div'), { id: 'gcal-toast' });
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.18)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, ms);
+}
+
+// ── Calendar Integration (manual modal fallback) ──────────────────
 
 function _calDates(date, time) {
   const today = new Date().toISOString().slice(0, 10);
