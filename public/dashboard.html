@@ -927,6 +927,7 @@ function requestCard(r) {
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="action-btn" onclick="updateStatus('${r.id}','completed')" style="background:#E2E8F0;color:#475569">✓ Mark Complete</button>
         <button class="action-btn" onclick="replyWhatsApp('${r.id}')" style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
+        <button class="action-btn" onclick="showCalModal(allRequests.find(x=>x.id==='${r.id}'))" style="background:#EFF6FF;color:#1D4ED8">📅 Add to Calendar</button>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
         ${payBtns.join('')}
@@ -990,7 +991,7 @@ async function confirmRide(id) {
     await db.collection('rideRequests').doc(id).update({ status: 'confirmed', confirmedFare });
     upsertRider(id);
     if (r && currentDriverProfile) sendPaymentWhatsApp(r, confirmedFare);
-    if (r && r.date && r.time) showCalModal(r);
+    if (r) showCalModal(r);
   } catch (err) {
     alert('Could not confirm ride: ' + err.message);
   }
@@ -1003,7 +1004,7 @@ async function updateStatus(id, status) {
     if (status === 'completed') settleRidePrice(id); // fire-and-forget
     if (status === 'confirmed') {
       const booking = allRequests.find(r => r.id === id);
-      if (booking && booking.date && booking.time) showCalModal(booking);
+      if (booking) showCalModal(booking);
     }
   } catch (err) {
     alert('Could not update status: ' + err.message);
@@ -1545,7 +1546,8 @@ function downloadQR() {
 // ── Calendar Integration ──────────────────────────────────────────
 
 function _calDates(date, time) {
-  const [y, mo, d] = date.split('-');
+  const today = new Date().toISOString().slice(0, 10);
+  const [y, mo, d] = (date || today).split('-');
   const [h, mi] = (time || '09:00').split(':').map(Number);
   const pad = n => String(n).padStart(2, '0');
   const start = `${y}${mo}${d}T${pad(h)}${pad(mi)}00`;
