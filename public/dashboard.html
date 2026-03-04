@@ -121,6 +121,24 @@
     .fare-input::-webkit-inner-spin-button,
     .fare-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .fare-input { -moz-appearance: textfield; }
+
+    /* ── QR Modal ──────────────────────────────────────────────── */
+    #qr-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); z-index: 200;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #qr-modal.open { display: flex; }
+
+    /* ── Print styles ──────────────────────────────────────────── */
+    @media print {
+      body > * { visibility: hidden; }
+      #qr-print-card, #qr-print-card * { visibility: visible; }
+      #qr-print-card {
+        display: block !important;
+        position: fixed; top: 0; left: 0; width: 100%;
+      }
+    }
   </style>
 </head>
 <body style="background:#f8fafc;min-height:100vh">
@@ -185,6 +203,14 @@
           <svg style="width:14px;height:14px;flex-shrink:0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Share
         </button>
+        <button onclick="showQRModal()"
+          style="font-size:13px;font-weight:600;background:rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:9px;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;display:flex;align-items:center;gap:5px">
+          <svg style="width:14px;height:14px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/>
+            <path stroke-width="2" d="M14 14h2v2h-2zM18 14h3M18 18v3M14 18h2M20 18h1"/>
+          </svg>
+          Print QR
+        </button>
       </div>
     </div>
   </div>
@@ -205,7 +231,9 @@
       🗓 Ride Requests
       <span id="pending-badge" style="display:none;background:#EF4444;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:5px"></span>
     </button>
-    <button class="tab-btn inactive" id="tab-riders" onclick="showTab('riders')">👥 My Riders</button>
+    <button class="tab-btn inactive" id="tab-riders"   onclick="showTab('riders')">👥 My Riders</button>
+    <button class="tab-btn inactive" id="tab-routes"   onclick="showTab('routes')">🗺 My Routes</button>
+    <button class="tab-btn inactive" id="tab-business" onclick="showTab('business')">🏢 Business</button>
   </div>
 
   <!-- ════════════════ PROFILE TAB ════════════════ -->
@@ -293,7 +321,25 @@
         <!-- ── Pricing ──────────────────────────────────────────── -->
         <div>
           <div class="section-label">Pricing</div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Set base rates for each service — riders will see these on your booking page.</div>
+
+          <!-- Per-minute rate -->
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin-bottom:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px">
+              Per-minute rate
+            </label>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Fare is auto-calculated on the booking page as <strong>route duration × this rate</strong>. Default is $1.50/min.</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;width:140px">
+                <span style="padding:10px 12px;font-size:13px;color:#94a3b8;background:#f8fafc;border-right:1px solid #e2e8f0;white-space:nowrap">$ / min</span>
+                <input type="number" id="p-per-min" min="0" step="0.10" value="1.50"
+                  style="flex:1;padding:10px 10px;font-size:15px;font-weight:700;color:#0f172a;border:none;outline:none;width:60px"
+                  oninput="updatePerMinPreview()">
+              </div>
+              <span id="per-min-preview" style="font-size:12px;color:#64748b"></span>
+            </div>
+          </div>
+
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Optional: set fixed base rates per service as a fallback when no route is calculated.</div>
           <div id="pricing-rows" style="display:flex;flex-direction:column;gap:8px"></div>
           <button type="button" onclick="addPriceRow()"
             style="margin-top:10px;font-size:13px;font-weight:600;color:var(--ac);background:transparent;border:1.5px dashed var(--ac);border-radius:10px;padding:8px 16px;cursor:pointer;transition:background .12s"
@@ -331,6 +377,10 @@
             <div>
               <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Zelle</label>
               <input type="text" id="p-zelle" class="input-f" placeholder="phone or email">
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px">Credit Card Link</label>
+              <input type="text" id="inp-card" class="input-f" placeholder="e.g. stripe.com/pay/your-link or square.link/...">
             </div>
           </div>
         </div>
@@ -391,6 +441,102 @@
     </div>
   </div>
 
+  <!-- ════════════════ ROUTES TAB ════════════════ -->
+  <div id="routes-tab" style="display:none" class="fade-in">
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px;background:#f8fafc;border-radius:12px;padding:12px 16px">
+      📊 Your route price history. Prices are updated automatically when you complete rides. Override anytime.
+    </div>
+    <div id="routes-list" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div id="routes-empty" style="display:none;text-align:center;padding:60px 20px;color:#94a3b8">
+      <div style="font-size:40px;margin-bottom:12px">🗺</div>
+      <div style="font-size:16px;font-weight:600;color:#475569;margin-bottom:6px">No route history yet</div>
+      <div style="font-size:14px">Complete rides to build your price history per route.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════ BUSINESS TAB ════════════════ -->
+  <div id="business-tab" style="display:none" class="fade-in">
+    <div id="business-content"></div>
+  </div>
+
+</div>
+
+<!-- ── QR Code Modal ───────────────────────────────────────────── -->
+<div id="qr-modal" onclick="if(event.target===this)closeQRModal()">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:360px;width:100%;text-align:center;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.25)">
+
+    <!-- Close -->
+    <button onclick="closeQRModal()" style="position:absolute;top:14px;right:14px;background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:#64748b;line-height:1">✕</button>
+
+    <!-- Header -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:20px">Your Booking QR Code</div>
+
+    <!-- QR image -->
+    <div style="display:inline-block;padding:14px;background:#f8fafc;border-radius:16px;margin-bottom:18px">
+      <img id="qr-img" src="" alt="QR Code" width="200" height="200" style="display:block;border-radius:8px">
+    </div>
+
+    <!-- Business name + subtitle -->
+    <div id="qr-modal-biz" style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:4px"></div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:6px">Scan to book a ride</div>
+    <div id="qr-modal-url" style="font-size:10px;color:#cbd5e1;font-family:monospace;word-break:break-all;margin-bottom:24px"></div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="printQR()"
+        style="background:#0f172a;color:#fff;border:none;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px">
+        <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a1 1 0 001-1v-4a1 1 0 00-1-1H9a1 1 0 00-1 1v4a1 1 0 001 1zm1-13V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3"/>
+        </svg>
+        Print
+      </button>
+      <button onclick="downloadQR()"
+        style="background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px">
+        <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Save
+      </button>
+    </div>
+
+    <p style="font-size:11px;color:#cbd5e1;margin-top:16px">Place in your car or share as an image — riders scan to book instantly</p>
+  </div>
+</div>
+
+<!-- ── Print-only QR card (hidden on screen, visible when printing) ── -->
+<div id="qr-print-card" style="display:none;font-family:'Inter',system-ui,sans-serif">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8fafc;padding:40px 20px">
+    <div style="background:#0f172a;border-radius:24px;padding:40px 36px;text-align:center;max-width:340px;width:100%">
+
+      <!-- Brand mark -->
+      <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:28px">
+        <div style="width:28px;height:28px;border-radius:8px;background:#F59E0B;display:flex;align-items:center;justify-content:center">
+          <svg style="width:15px;height:15px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <span style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.2px">DriverConnect</span>
+      </div>
+
+      <!-- QR code on white background for scannability -->
+      <div style="display:inline-block;background:#fff;border-radius:16px;padding:16px;margin-bottom:24px">
+        <img id="qr-print-img" src="" alt="QR Code" width="220" height="220" style="display:block;border-radius:8px">
+      </div>
+
+      <!-- Driver name -->
+      <div id="qr-print-biz" style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:8px"></div>
+
+      <!-- CTA -->
+      <div style="font-size:15px;color:#94a3b8;margin-bottom:6px">Scan to book your ride</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:20px">No app needed &nbsp;·&nbsp; No surge pricing</div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:rgba(255,255,255,.08);margin-bottom:16px"></div>
+
+      <!-- URL -->
+      <div id="qr-print-url" style="font-size:10px;color:#475569;font-family:monospace;word-break:break-all"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Firebase SDKs -->
@@ -405,9 +551,15 @@ let currentUser          = null;
 let currentDriverProfile = null;
 let allRequests          = [];
 let allRiders            = [];
+let allRoutes            = [];
+let currentBusiness      = null;
 let activeFilter         = 'all';
 let requestsListener     = null;
 let ridersListener       = null;
+let routesListener       = null;
+let assignedListener     = null;
+let ownRequestsSnap      = [];
+let assignedRequestsSnap = [];
 
 // ── Auth guard ─────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
@@ -415,7 +567,9 @@ auth.onAuthStateChanged(async user => {
   currentUser = user;
   await loadProfile();
   listenToRequests();
+  listenToAssignedRequests();
   listenToRiders();
+  listenToRoutes();
   document.getElementById('loading-overlay').style.display = 'none';
 });
 
@@ -423,17 +577,21 @@ auth.onAuthStateChanged(async user => {
 function signOut() {
   if (requestsListener) requestsListener();
   if (ridersListener)   ridersListener();
+  if (routesListener)   routesListener();
+  if (assignedListener) assignedListener();
   auth.signOut().then(() => window.location.href = 'index.html');
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────
 function showTab(tab) {
-  ['profile', 'requests', 'riders'].forEach(t => {
+  ['profile', 'requests', 'riders', 'routes', 'business'].forEach(t => {
     document.getElementById(`${t}-tab`).style.display = t === tab ? 'block' : 'none';
     const btn = document.getElementById(`tab-${t}`);
     btn.classList.toggle('active',   t === tab);
     btn.classList.toggle('inactive', t !== tab);
   });
+  if (tab === 'routes')   renderRoutes();
+  if (tab === 'business') renderBusiness();
 }
 
 // ── Color swatches ─────────────────────────────────────────────────
@@ -475,7 +633,10 @@ function populateProfile(d) {
   document.getElementById('p-venmo').value   = d.venmo        || '';
   document.getElementById('p-cash').value    = d.cashapp      || '';
   document.getElementById('p-zelle').value   = d.zelle        || '';
+  document.getElementById('inp-card').value  = d.cardLink     || '';
+  document.getElementById('p-per-min').value = d.perMinRate   != null ? d.perMinRate : 1.50;
   document.getElementById('p-logo').value    = d.logoUrl      || '';
+  updatePerMinPreview();
   if (d.logoUrl) showLogoPreview(d.logoUrl);
 
   const svcs = d.services || [];
@@ -546,6 +707,13 @@ function getLookupFare(serviceName) {
   return match ? match.price : '';
 }
 
+function updatePerMinPreview() {
+  const rate = parseFloat(document.getElementById('p-per-min').value) || 1.50;
+  const el   = document.getElementById('per-min-preview');
+  const examples = [15, 30, 45].map(m => `${m} min = $${Math.round(m * rate)}`).join(' · ');
+  el.textContent = examples;
+}
+
 // ── Save profile ───────────────────────────────────────────────────
 async function saveProfile(e) {
   e.preventDefault();
@@ -565,11 +733,13 @@ async function saveProfile(e) {
     venmo:          document.getElementById('p-venmo').value.trim(),
     cashapp:        document.getElementById('p-cash').value.trim(),
     zelle:          document.getElementById('p-zelle').value.trim(),
+    cardLink:       document.getElementById('inp-card').value.trim(),
     logoUrl:        document.getElementById('p-logo').value.trim(),
     accentColor:    document.getElementById('p-color').value,
     accentColorDark:document.getElementById('p-colord').value,
     services,
     pricing,
+    perMinRate: parseFloat(document.getElementById('p-per-min').value) || 1.50,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -610,14 +780,52 @@ function listenToRequests() {
     .where('driverId', '==', currentUser.uid)
     .orderBy('createdAt', 'desc')
     .onSnapshot(snapshot => {
-      allRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      updatePendingBadge();
-      renderRequests();
+      ownRequestsSnap = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       document.getElementById('requests-loading').style.display = 'none';
+      mergeAllRequests();
     }, err => {
       console.error('requests listener:', err);
       document.getElementById('requests-loading').textContent = 'Could not load requests.';
     });
+}
+
+// ── Listen for requests assigned to this driver (team feature) ──────
+function listenToAssignedRequests() {
+  assignedListener = db.collection('rideRequests')
+    .where('assignedTo', '==', currentUser.uid)
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(snapshot => {
+      assignedRequestsSnap = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      mergeAllRequests();
+    }, err => { console.error('assigned listener:', err); });
+}
+
+// ── Merge own + assigned requests, de-dup, sort by date ─────────────
+function mergeAllRequests() {
+  const seen   = new Set();
+  const merged = [];
+  [...ownRequestsSnap, ...assignedRequestsSnap].forEach(r => {
+    if (!seen.has(r.id)) { seen.add(r.id); merged.push(r); }
+  });
+  merged.sort((a, b) => {
+    const ta = a.createdAt?.toMillis?.() || 0;
+    const tb = b.createdAt?.toMillis?.() || 0;
+    return tb - ta;
+  });
+  allRequests = merged;
+  updatePendingBadge();
+  renderRequests();
+}
+
+// ── Real-time route history listener ──────────────────────────────
+function listenToRoutes() {
+  routesListener = db.collection('routePrices').doc(currentUser.uid)
+    .collection('routes')
+    .orderBy('updatedAt', 'desc')
+    .onSnapshot(snapshot => {
+      allRoutes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (document.getElementById('routes-tab').style.display !== 'none') renderRoutes();
+    }, err => { console.error('routes listener:', err); });
 }
 
 function updatePendingBadge() {
@@ -678,9 +886,18 @@ function requestCard(r) {
   // Actions
   let actions = '';
   if (r.status === 'pending') {
-    const baseFare = r.estimatedFare || getLookupFare(r.selectedService) || '';
+    const baseFare  = r.estimatedFare || r.suggestedPrice || getLookupFare(r.selectedService) || '';
+    const priceHint = r.suggestedPrice
+      ? `<span style="font-size:11px;color:#64748b;margin-left:4px">🗺 route avg: $${r.suggestedPrice}</span>`
+      : '';
+    const assignedBadge = (r.assignedTo && r.assignedTo !== currentUser.uid)
+      ? `<div style="font-size:11px;color:#6D28D9;background:#EDE9FE;padding:2px 8px;border-radius:6px;margin-bottom:8px;display:inline-block">🏢 Assigned to another driver</div>`
+      : (r.assignedTo === currentUser.uid && r.driverId !== currentUser.uid)
+        ? `<div style="font-size:11px;color:#065F46;background:#D1FAE5;padding:2px 8px;border-radius:6px;margin-bottom:8px;display:inline-block">🏢 Assigned to you by business owner</div>`
+        : '';
     actions = `
       <div style="margin-top:14px">
+        ${assignedBadge}
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:7px 12px">
             <span style="font-size:13px;color:#64748b;white-space:nowrap">Confirm at</span>
@@ -688,12 +905,14 @@ function requestCard(r) {
             <input type="number" class="fare-input" id="fare-${r.id}" value="${baseFare}" placeholder="0" min="0"
               style="width:60px;font-size:15px;padding:0">
           </div>
+          ${priceHint}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="action-btn" onclick="confirmRide('${r.id}')" style="background:#D1FAE5;color:#065F46">✓ Confirm</button>
           <button class="action-btn" onclick="updateStatus('${r.id}','declined')" style="background:#FEE2E2;color:#991B1B">✗ Decline</button>
           <button class="action-btn" onclick="replyWhatsApp('${r.id}')" style="background:#E0F2FE;color:#0369A1">💬 Reply on WhatsApp</button>
         </div>
+        <p id="confirm-err-${r.id}" style="display:none;color:#ef4444;font-size:12px;margin-top:6px">Set a price before confirming this ride.</p>
       </div>`;
   } else if (r.status === 'confirmed') {
     const fare    = r.confirmedFare || r.estimatedFare || null;
@@ -756,11 +975,22 @@ function requestCard(r) {
 async function confirmRide(id) {
   const priceInput = document.getElementById(`fare-${id}`);
   const confirmedFare = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
+  const r = allRequests.find(x => x.id === id);
+
+  if (confirmedFare === 0 && !(r?.suggestedPrice)) {
+    const errEl = document.getElementById(`confirm-err-${id}`);
+    if (errEl) {
+      errEl.style.display = 'block';
+      setTimeout(() => { errEl.style.display = 'none'; }, 4000);
+    }
+    return;
+  }
+
   try {
     await db.collection('rideRequests').doc(id).update({ status: 'confirmed', confirmedFare });
     upsertRider(id);
-    const r = allRequests.find(x => x.id === id);
     if (r && currentDriverProfile) sendPaymentWhatsApp(r, confirmedFare);
+    if (r && r.date && r.time) showCalModal(r);
   } catch (err) {
     alert('Could not confirm ride: ' + err.message);
   }
@@ -770,29 +1000,78 @@ async function confirmRide(id) {
 async function updateStatus(id, status) {
   try {
     await db.collection('rideRequests').doc(id).update({ status });
+    if (status === 'completed') settleRidePrice(id); // fire-and-forget
+    if (status === 'confirmed') {
+      const booking = allRequests.find(r => r.id === id);
+      if (booking && booking.date && booking.time) showCalModal(booking);
+    }
   } catch (err) {
     alert('Could not update status: ' + err.message);
   }
 }
 
+// ── Settle ride price → update route history ───────────────────────
+async function settleRidePrice(id) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r || !r.pickup || !r.dropoff) return;
+  const finalPrice = r.confirmedFare || r.estimatedFare || r.suggestedPrice;
+  if (!finalPrice) return;
+  const routeId = normalizeRoute(r.pickup, r.dropoff);
+  const ref = db.collection('routePrices').doc(currentUser.uid)
+    .collection('routes').doc(routeId);
+  try {
+    const snap = await ref.get();
+    if (snap.exists) {
+      const d     = snap.data();
+      const count = (d.count || 0) + 1;
+      const avg   = ((d.avgPrice || 0) * (d.count || 0) + finalPrice) / count;
+      await ref.update({
+        lastPrice:  finalPrice,
+        avgPrice:   Math.round(avg * 100) / 100,
+        count,
+        updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      await ref.set({
+        pickup:    r.pickup,
+        dropoff:   r.dropoff,
+        lastPrice: finalPrice,
+        avgPrice:  finalPrice,
+        count:     1,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  } catch (err) { console.error('settleRidePrice:', err); }
+}
+
 // ── Payment: send WhatsApp message on confirm ──────────────────────
 function sendPaymentWhatsApp(r, fare) {
   if (!currentDriverProfile?.phone) return;
-  const venmo   = currentDriverProfile.venmo;
-  const cashapp = currentDriverProfile.cashapp;
-  const price   = fare || r.estimatedFare || '—';
-  const dateStr = r.date ? fmtDate(r.date) : '—';
-  const note    = encodeURIComponent(`Ride ${dateStr}`);
+  const venmo      = currentDriverProfile.venmo;
+  const cashapp    = currentDriverProfile.cashapp;
+  const finalPrice = fare || r.estimatedFare || r.suggestedPrice || null;
+  const price      = finalPrice ? Math.round(finalPrice) : null;
+  const dateStr    = r.date ? fmtDate(r.date) : '—';
+  const timeStr    = r.time ? fmtTime(r.time) : '';
+  const svcStr     = r.selectedService ? `${r.selectedService} ` : '';
+  const driverName = currentDriverProfile.businessName || currentDriverProfile.name || 'Your driver';
+  const note       = encodeURIComponent(`Ride ${dateStr}`);
 
   let payLinks = '';
   if (venmo)   payLinks += `\nVenmo @${venmo}: venmo://paycharge?txn=pay&recipients=${venmo}&amount=${price}&note=${note}`;
   if (cashapp) payLinks += `\nCashApp $${cashapp}: https://cash.app/$${cashapp}/${price}`;
 
+  const priceLine = price ? `\n💰 Total: $${price}` : '';
+  const trackUrl  = `${location.origin}/track.html?r=${r.id}`;
   const msg =
-    `Hi ${r.riderName}! Your ride on ${dateStr} is confirmed 🚗\n` +
-    `Total: $${price}` +
+    `Hi ${r.riderName}! Your ${svcStr}ride on ${dateStr}${timeStr ? ` at ${timeStr}` : ''} is confirmed ✅` +
+    priceLine +
+    `\n📍 Pickup: ${r.pickup || '—'}` +
+    `\n🏁 Drop-off: ${r.dropoff || '—'}` +
     (payLinks ? `\n\nPay via:${payLinks}` : '') +
-    `\n\nSee you soon!`;
+    `\n\n🔗 Track your ride: ${trackUrl}` +
+    `\n\nSee you soon! — ${driverName}`;
 
   openWhatsApp(r.riderPhone, msg);
 }
@@ -842,7 +1121,8 @@ function copyPaymentMsg(id, btn) {
 function replyWhatsApp(id) {
   const r = allRequests.find(req => req.id === id);
   if (!r) return;
-  const msg = `Hi ${r.riderName}, this is your driver. Regarding your ride request on ${fmtDate(r.date)} at ${fmtTime(r.time)} from ${r.pickup} to ${r.dropoff} — `;
+  const trackUrl = `${location.origin}/track.html?r=${r.id}`;
+  const msg = `Hi ${r.riderName}, this is your driver. Regarding your ride request on ${fmtDate(r.date)} at ${fmtTime(r.time)} from ${r.pickup} to ${r.dropoff} — \n\n🔗 Track your ride status: ${trackUrl}`;
   openWhatsApp(r.riderPhone, msg);
 }
 
@@ -960,6 +1240,211 @@ function bookAgainRider(id) {
   window.open(`${bookingUrl(currentUser.uid)}&name=${encodeURIComponent(r.name)}&phone=${encodeURIComponent(r.phone)}`, '_blank');
 }
 
+// ── My Routes: render route history ───────────────────────────────
+function renderRoutes() {
+  const list  = document.getElementById('routes-list');
+  const empty = document.getElementById('routes-empty');
+  if (allRoutes.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = allRoutes.map(r => routeCard(r)).join('');
+}
+
+function routeCard(r) {
+  const avg   = r.avgPrice  ? `$${Math.round(r.avgPrice)}`  : '—';
+  const last  = r.lastPrice ? `$${Math.round(r.lastPrice)}` : '—';
+  const count = r.count || 0;
+  const curVal = r.avgPrice ? Math.round(r.avgPrice) : '';
+  return `
+    <div class="req-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.pickup || '—')}</div>
+          <div style="font-size:11px;color:#94a3b8;margin:1px 0">→</div>
+          <div style="font-size:13px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.dropoff || '—')}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:24px;font-weight:800;color:#0f172a">${avg}</div>
+          <div style="font-size:11px;color:#94a3b8">${count} ride${count === 1 ? '' : 's'} · last: ${last}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:#64748b;white-space:nowrap">Override price:</span>
+        <div style="display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:9px;overflow:hidden">
+          <span style="padding:6px 8px;font-size:13px;color:#94a3b8;background:#f8fafc;border-right:1px solid #e2e8f0">$</span>
+          <input type="number" id="rprice-${r.id}" value="${curVal}" placeholder="0" min="0"
+            class="fare-input" style="width:60px;padding:6px 8px">
+        </div>
+        <button class="action-btn" onclick="saveRoutePrice('${r.id}')" style="background:#FEF3C7;color:#92400E">Save</button>
+      </div>
+    </div>`;
+}
+
+async function saveRoutePrice(routeId) {
+  const input = document.getElementById(`rprice-${routeId}`);
+  const price = parseFloat(input?.value);
+  if (!price || isNaN(price)) { alert('Enter a valid price.'); return; }
+  try {
+    await db.collection('routePrices').doc(currentUser.uid)
+      .collection('routes').doc(routeId)
+      .update({ avgPrice: price, lastPrice: price, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if (input) { input.style.outline = '2px solid #10B981'; setTimeout(() => { input.style.outline = ''; }, 2000); }
+  } catch (err) { alert('Could not save: ' + err.message); }
+}
+
+// ── Business tab: render ───────────────────────────────────────────
+async function renderBusiness() {
+  const container = document.getElementById('business-content');
+  if (!currentDriverProfile?.businessId) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;margin-bottom:16px">🏢</div>
+        <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px">Multi-Driver Business</div>
+        <p style="font-size:14px;color:#64748b;max-width:380px;margin:0 auto 24px;line-height:1.6">
+          Create a business team to manage multiple drivers and share a single booking page for your fleet.
+        </p>
+        <a href="business-setup.html"
+           style="display:inline-flex;align-items:center;gap:8px;background:#F59E0B;color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">
+          🏢 Set Up Business Team
+        </a>
+      </div>`;
+    return;
+  }
+
+  if (!currentBusiness) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8">Loading business…</div>';
+    try {
+      const snap = await db.collection('businesses').doc(currentDriverProfile.businessId).get();
+      if (!snap.exists) { container.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8">Business not found.</div>'; return; }
+      currentBusiness = { id: snap.id, ...snap.data() };
+    } catch (err) { container.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8">Could not load business.</div>'; return; }
+  }
+
+  const b        = currentBusiness;
+  const isOwner  = b.ownerUid === currentUser.uid;
+  const members  = b.members || [];
+  const bookLink = `${location.origin}/business-book.html?b=${b.id}`;
+
+  const unassigned = allRequests.filter(r => r.businessId === b.id && !r.assignedTo && r.status === 'pending');
+
+  const membersHtml = members.map(m => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8fafc;border-radius:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">
+        ${escHtml(initials(m.name || '?'))}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:#0f172a">${escHtml(m.name || '—')}</div>
+        <div style="font-size:12px;color:#64748b">${m.role === 'owner' ? '👑 Owner' : '🚗 Driver'}</div>
+      </div>
+      ${isOwner && m.uid !== currentUser.uid
+        ? `<button onclick="removeMember('${m.uid}')" class="action-btn" style="background:#FEE2E2;color:#991B1B">Remove</button>`
+        : ''}
+    </div>`).join('');
+
+  const unassignedHtml = unassigned.length > 0 ? `
+    <div style="margin-top:24px">
+      <div class="section-label">Unassigned Business Requests (${unassigned.length})</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${unassigned.map(r => `
+          <div style="background:#fff;border:1.5px solid #FDE68A;border-radius:14px;padding:16px">
+            <div style="margin-bottom:10px">
+              <div style="font-size:15px;font-weight:700;color:#0f172a">${escHtml(r.riderName || '—')}</div>
+              <div style="font-size:13px;color:#64748b;margin-top:2px">${escHtml(r.pickup || '—')} → ${escHtml(r.dropoff || '—')}</div>
+              <div style="font-size:12px;color:#94a3b8">${r.date ? fmtDate(r.date) : '—'} at ${r.time ? fmtTime(r.time) : '—'}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <label style="font-size:13px;color:#64748b">Assign to:</label>
+              <select id="assign-sel-${r.id}" class="input-f" style="flex:1;max-width:200px;cursor:pointer">
+                <option value="">— choose driver —</option>
+                ${members.map(m => `<option value="${m.uid}">${escHtml(m.name)} ${m.role === 'owner' ? '(Owner)' : ''}</option>`).join('')}
+              </select>
+              <button onclick="assignRequest('${r.id}')" class="action-btn" style="background:#D1FAE5;color:#065F46">Assign</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div style="background:#fff;border-radius:20px;border:1px solid #e2e8f0;padding:24px 28px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:#0f172a">${escHtml(b.businessName || '—')}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:3px">${isOwner ? '👑 You are the owner' : '🚗 You are a team driver'}</div>
+        </div>
+        <a href="business-setup.html" style="font-size:13px;font-weight:600;color:#475569;border:1.5px solid #e2e8f0;padding:8px 16px;border-radius:10px;text-decoration:none">⚙️ Manage</a>
+      </div>
+
+      ${isOwner ? `
+      <div style="margin-bottom:20px;background:#f8fafc;border-radius:12px;padding:14px">
+        <div class="section-label">Invite Code</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:28px;font-weight:800;color:#0f172a;letter-spacing:.18em">${escHtml(b.inviteCode || '—')}</div>
+          <button id="biz-copy-code-btn" onclick="copyToClipboard('${b.inviteCode}', document.getElementById('biz-copy-code-btn'))"
+            class="action-btn" style="background:#FEF3C7;color:#92400E">Copy</button>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:5px">Share this code with drivers to join your team</div>
+      </div>` : ''}
+
+      <div style="margin-bottom:20px">
+        <div class="section-label">Business Booking Link</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:0;font-size:12px;color:#475569;background:#f8fafc;padding:10px 12px;border-radius:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${bookLink}</div>
+          <button id="biz-copy-link-btn" onclick="copyToClipboard('${bookLink}', document.getElementById('biz-copy-link-btn'))"
+            class="action-btn" style="background:#DBEAFE;color:#1D4ED8;flex-shrink:0">Copy Link</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Team Members (${members.length})</div>
+        <div style="display:flex;flex-direction:column;gap:8px">${membersHtml}</div>
+      </div>
+
+      ${!isOwner ? `
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid #f1f5f9">
+        <button onclick="leaveBusiness()" style="background:#FEE2E2;color:#991B1B;border:none;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer">
+          Leave Business
+        </button>
+      </div>` : ''}
+    </div>
+    ${unassignedHtml}`;
+}
+
+async function assignRequest(requestId) {
+  const sel = document.getElementById(`assign-sel-${requestId}`);
+  const assigneeUid = sel?.value;
+  if (!assigneeUid) { alert('Please select a driver to assign.'); return; }
+  try {
+    await db.collection('rideRequests').doc(requestId).update({ assignedTo: assigneeUid });
+    currentBusiness = null; // force reload
+    renderBusiness();
+  } catch (err) { alert('Could not assign: ' + err.message); }
+}
+
+async function removeMember(memberUid) {
+  if (!currentBusiness || currentBusiness.ownerUid !== currentUser.uid) return;
+  if (!confirm('Remove this driver from the team?')) return;
+  try {
+    const members = (currentBusiness.members || []).filter(m => m.uid !== memberUid);
+    await db.collection('businesses').doc(currentBusiness.id).update({ members });
+    await db.collection('drivers').doc(memberUid).update({ businessId: null, businessRole: null });
+    currentBusiness.members = members;
+    renderBusiness();
+  } catch (err) { alert('Could not remove: ' + err.message); }
+}
+
+async function leaveBusiness() {
+  if (!currentBusiness || !confirm('Leave this business team?')) return;
+  try {
+    const uid     = currentUser.uid;
+    const members = (currentBusiness.members || []).filter(m => m.uid !== uid);
+    await db.collection('businesses').doc(currentBusiness.id).update({ members });
+    await db.collection('drivers').doc(uid).update({ businessId: null, businessRole: null });
+    currentDriverProfile.businessId   = null;
+    currentDriverProfile.businessRole = null;
+    currentBusiness = null;
+    renderBusiness();
+  } catch (err) { alert('Could not leave: ' + err.message); }
+}
+
 // ── Utility ───────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1012,6 +1497,137 @@ function removeLogo() {
   hideLogoPreview();
 }
 
+// ── QR Code ────────────────────────────────────────────────────────
+function showQRModal() {
+  const url     = bookingUrl(currentUser.uid);
+  const bizName = currentDriverProfile?.businessName || currentDriverProfile?.name || 'My Page';
+  const qrSrc   = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&data=${encodeURIComponent(url)}`;
+
+  document.getElementById('qr-img').src         = qrSrc;
+  document.getElementById('qr-modal-biz').textContent = bizName;
+  document.getElementById('qr-modal-url').textContent = url;
+
+  // Pre-fill print card too
+  document.getElementById('qr-print-img').src        = qrSrc;
+  document.getElementById('qr-print-biz').textContent = bizName;
+  document.getElementById('qr-print-url').textContent = url;
+
+  document.getElementById('qr-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeQRModal() {
+  document.getElementById('qr-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function printQR() {
+  const card = document.getElementById('qr-print-card');
+  card.style.display = 'block';
+  window.print();
+  // Restore after print dialog closes
+  const restore = () => {
+    card.style.display = 'none';
+    window.removeEventListener('focus', restore);
+  };
+  window.addEventListener('focus', restore);
+}
+
+function downloadQR() {
+  const url  = bookingUrl(currentUser.uid);
+  const link = document.createElement('a');
+  link.href  = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=H&data=${encodeURIComponent(url)}`;
+  link.download = 'booking-qr.png';
+  link.target = '_blank';
+  link.click();
+}
+
+// ── Calendar Integration ──────────────────────────────────────────
+
+function _calDates(date, time) {
+  const [y, mo, d] = date.split('-');
+  const [h, mi] = (time || '09:00').split(':').map(Number);
+  const pad = n => String(n).padStart(2, '0');
+  const start = `${y}${mo}${d}T${pad(h)}${pad(mi)}00`;
+  const endH = h + 1 >= 24 ? 23 : h + 1;
+  const end = `${y}${mo}${d}T${pad(endH)}${pad(mi)}00`;
+  return { start, end };
+}
+
+function _googleCalUrl(b) {
+  const { start, end } = _calDates(b.date, b.time);
+  const text = encodeURIComponent(`Ride: ${b.riderName || 'Rider'}`);
+  const loc  = encodeURIComponent(b.pickup || '');
+  const det  = encodeURIComponent(
+    `Pickup: ${b.pickup || '—'}\nDropoff: ${b.dropoff || '—'}\nRider: ${b.riderName || '—'} · ${b.riderPhone || '—'}\nPassengers: ${b.passengers || '1'}`
+    + (b.notes ? `\nNotes: ${b.notes}` : '')
+  );
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${det}&location=${loc}`;
+}
+
+function _downloadICS(b) {
+  const { start, end } = _calDates(b.date, b.time);
+  const lines = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DriverConnect//EN',
+    'BEGIN:VEVENT',
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:Ride: ${(b.riderName || 'Rider').replace(/[,;\\]/g, '')}`,
+    `DESCRIPTION:Pickup: ${b.pickup || '—'}\\nDropoff: ${b.dropoff || '—'}\\nRider: ${b.riderName || '—'} · ${b.riderPhone || '—'}${b.notes ? '\\nNotes: ' + b.notes : ''}`,
+    `LOCATION:${(b.pickup || '').replace(/[,;\\]/g, '')}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT', 'END:VCALENDAR'
+  ];
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: `ride-${(b.riderName || 'ride').replace(/\s+/g, '-')}.ics` });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+let _calBooking = null;
+
+function showCalModal(booking) {
+  _calBooking = booking;
+  document.getElementById('cal-info').innerHTML =
+    `<strong>${escHtml(booking.riderName || '—')}</strong><br>` +
+    `📍 ${escHtml(booking.pickup || '—')} → ${escHtml(booking.dropoff || '—')}<br>` +
+    `🕐 ${fmtDate(booking.date)}, ${fmtTime(booking.time)}<br>` +
+    `👥 ${escHtml(String(booking.passengers || '1'))} passenger(s)`;
+  document.getElementById('cal-google-btn').href = _googleCalUrl(booking);
+  document.getElementById('cal-ics-btn').onclick = () => _downloadICS(_calBooking);
+  const m = document.getElementById('cal-modal');
+  m.style.display = 'flex';
+}
+
+function closeCalModal() {
+  document.getElementById('cal-modal').style.display = 'none';
+  _calBooking = null;
+}
+
 </script>
+
+<div id="cal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:20px;padding:28px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="font-size:32px;margin-bottom:12px">📅</div>
+    <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:6px">Ride confirmed!</h3>
+    <p style="font-size:13px;color:#64748b;margin-bottom:18px">Add this ride to your calendar?</p>
+    <div id="cal-info" style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:20px;text-align:left;font-size:13px;color:#334155;line-height:1.6"></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a id="cal-google-btn" href="#" target="_blank"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#4285F4;color:#fff;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none">
+        📅 Add to Google Calendar
+      </a>
+      <button id="cal-ics-btn"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#f1f5f9;color:#334155;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;width:100%">
+        ⬇ Download .ics (Apple / Outlook)
+      </button>
+      <button onclick="closeCalModal()"
+        style="padding:10px;background:transparent;color:#94a3b8;border:none;cursor:pointer;font-size:13px">
+        Skip for now
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

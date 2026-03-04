@@ -71,3 +71,18 @@ function openWhatsApp(phone, message) {
   const clean = phone.replace(/\D/g, '');
   window.open(`https://wa.me/${clean}?text=${encodeURIComponent(message)}`, '_blank');
 }
+
+/**
+ * Create a stable, normalized route key from pickup and dropoff strings.
+ * A→B and B→A produce the same key (round-trip deduplication).
+ * Used to look up / write route price history in the routePrices subcollection.
+ */
+function normalizeRoute(pickup, dropoff) {
+  const clean = s => (s || '').toLowerCase().trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 ,.\-]/g, '');
+  const parts = [clean(pickup), clean(dropoff)].sort();
+  return btoa(parts.join('|||'))
+    .replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '')
+    .slice(0, 100);
+}

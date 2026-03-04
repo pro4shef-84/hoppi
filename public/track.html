@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Ride — DriverConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f8fafc; min-height: 100vh; }
+
+    .status-banner { border-radius: 16px; padding: 24px 20px; text-align: center; margin-bottom: 20px; }
+    .status-pending   { background: #FEF3C7; border: 1.5px solid #FDE68A; }
+    .status-confirmed { background: #D1FAE5; border: 1.5px solid #6EE7B7; }
+    .status-declined  { background: #FEE2E2; border: 1.5px solid #FECACA; }
+    .status-completed { background: #F1F5F9; border: 1.5px solid #E2E8F0; }
+
+    .detail-row { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .detail-row:last-child { border-bottom: none; }
+
+    /* live dot pulse */
+    #live-dot { display: none; }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+    .fade-in { animation: fi .35s ease both; }
+    @keyframes fi { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav style="background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:50">
+  <div style="max-width:480px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:8px">
+    <a href="index.html" style="display:flex;align-items:center;gap:7px;text-decoration:none">
+      <div style="width:28px;height:28px;border-radius:8px;background:#F59E0B;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg style="width:15px;height:15px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <span style="font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.3px">DriverConnect</span>
+    </a>
+    <span style="font-size:13px;color:#94a3b8;margin-left:2px">· Ride Tracker</span>
+    <!-- live indicator — hidden until data loads -->
+    <div id="live-dot" style="margin-left:auto;align-items:center;gap:5px;font-size:11px;color:#10B981;font-weight:600">
+      <span style="width:7px;height:7px;border-radius:50%;background:#10B981;display:inline-block" class="pulse"></span>
+      Live
+    </div>
+  </div>
+</nav>
+
+<!-- Loading -->
+<div id="loading" style="text-align:center;padding:80px 20px">
+  <div style="width:40px;height:40px;border-radius:12px;background:#F59E0B;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+    <svg style="width:22px;height:22px;color:#fff" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+    </svg>
+  </div>
+  <div style="font-size:14px;color:#94a3b8">Loading ride details…</div>
+</div>
+
+<!-- Error: not found -->
+<div id="error" style="display:none;text-align:center;padding:80px 20px">
+  <div style="font-size:48px;margin-bottom:14px">🔍</div>
+  <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:8px">Ride not found</h2>
+  <p style="font-size:14px;color:#64748b;max-width:280px;margin:0 auto">This tracking link may be invalid or the ride has been removed. Contact your driver directly.</p>
+</div>
+
+<!-- Error: permission / network -->
+<div id="error-perm" style="display:none;text-align:center;padding:80px 20px">
+  <div style="font-size:48px;margin-bottom:14px">🔒</div>
+  <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:8px">Unable to load ride</h2>
+  <p style="font-size:14px;color:#64748b;max-width:280px;margin:0 auto">There was a problem loading your ride details. Try refreshing the page or contact your driver directly.</p>
+  <button onclick="location.reload()" style="margin-top:20px;padding:12px 24px;background:#F59E0B;color:#fff;font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer">Retry</button>
+</div>
+
+<!-- Main -->
+<div id="page" style="display:none;max-width:480px;margin:0 auto;padding:24px 16px 60px" class="fade-in">
+
+  <!-- Status banner -->
+  <div id="status-banner" class="status-banner">
+    <div id="status-icon" style="font-size:36px;margin-bottom:10px"></div>
+    <div id="status-title" style="font-size:20px;font-weight:800;color:#0f172a;margin-bottom:5px"></div>
+    <div id="status-sub"   style="font-size:13px;color:#64748b"></div>
+  </div>
+
+  <!-- Driver card -->
+  <div style="background:#0f172a;border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <div id="driver-avatar"
+      style="width:48px;height:48px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden">
+    </div>
+    <div style="min-width:0">
+      <div id="driver-biz"  style="font-size:16px;font-weight:700;color:#fff"></div>
+      <div id="driver-name" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
+    </div>
+  </div>
+
+  <!-- Trip details card -->
+  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:18px 20px;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:14px">Trip Details</div>
+    <div id="trip-details"></div>
+  </div>
+
+  <!-- Confirmed fare highlight -->
+  <div id="fare-highlight" style="display:none;background:#D1FAE5;border:1.5px solid #6EE7B7;border-radius:14px;padding:16px 20px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:#065F46">Confirmed fare</span>
+      <span id="fare-highlight-amt" style="font-size:24px;font-weight:800;color:#065F46"></span>
+    </div>
+  </div>
+
+  <!-- Contact driver -->
+  <div id="contact-wrap" style="margin-bottom:12px"></div>
+
+  <!-- Book again -->
+  <div id="book-again-wrap" style="display:none;text-align:center;margin-top:16px">
+    <a id="book-again-link" href="#" style="font-size:14px;font-weight:600;color:#F59E0B;text-decoration:none">
+      Book another ride with this driver →
+    </a>
+  </div>
+
+</div>
+
+<!--
+  IMPORTANT: load all four Firebase compat modules before firebase-config.js.
+  firebase-config.js calls firebase.auth() and firebase.storage() at the top
+  level — omitting those scripts crashes the whole page.
+-->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+
+const requestId = new URLSearchParams(location.search).get('r');
+let driverData  = null;
+
+if (!requestId) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error').style.display   = 'block';
+} else {
+  listenToRequest(requestId);
+}
+
+function listenToRequest(id) {
+  db.collection('rideRequests').doc(id).onSnapshot(async snap => {
+    document.getElementById('loading').style.display = 'none';
+
+    if (!snap.exists) {
+      document.getElementById('error').style.display = 'block';
+      return;
+    }
+
+    const r = snap.data();
+
+    // Fetch driver profile once; re-use on subsequent status updates
+    if (!driverData && r.driverId) {
+      try {
+        const ds = await db.collection('drivers').doc(r.driverId).get();
+        if (ds.exists) driverData = ds.data();
+      } catch (e) { console.error('driver fetch:', e); }
+    }
+
+    render(r);
+    document.getElementById('page').style.display    = 'block';
+    document.getElementById('live-dot').style.display = 'flex';
+
+  }, err => {
+    console.error('snapshot error:', err.code, err.message);
+    document.getElementById('loading').style.display = 'none';
+    // Distinguish permission/network errors from genuine not-found
+    if (err.code === 'permission-denied' || err.code === 'unavailable') {
+      document.getElementById('error-perm').style.display = 'block';
+    } else {
+      document.getElementById('error').style.display = 'block';
+    }
+  });
+}
+
+const STATUS_CFG = {
+  pending: {
+    icon:  '🟡',
+    title: 'Awaiting Confirmation',
+    sub:   "Your driver is reviewing the request — you'll hear back shortly.",
+    cls:   'status-pending',
+  },
+  confirmed: {
+    icon:  '✅',
+    title: 'Ride Confirmed!',
+    sub:   'Your driver has accepted. See you soon!',
+    cls:   'status-confirmed',
+  },
+  declined: {
+    icon:  '❌',
+    title: 'Request Declined',
+    sub:   "The driver couldn't take this ride. Try booking again.",
+    cls:   'status-declined',
+  },
+  completed: {
+    icon:  '🏁',
+    title: 'Ride Completed',
+    sub:   'Thanks for riding — hope it was great!',
+    cls:   'status-completed',
+  },
+};
+
+function render(r) {
+  const cfg = STATUS_CFG[r.status] || STATUS_CFG.pending;
+
+  // Status banner
+  document.getElementById('status-banner').className = `status-banner ${cfg.cls}`;
+  document.getElementById('status-icon').textContent  = cfg.icon;
+  document.getElementById('status-title').textContent = cfg.title;
+  document.getElementById('status-sub').textContent   = cfg.sub;
+  document.title = `${cfg.title} — DriverConnect`;
+
+  // Driver info
+  const biz  = driverData?.businessName || driverData?.name || 'Your Driver';
+  const name = driverData?.name || '';
+  document.getElementById('driver-biz').textContent  = biz;
+  document.getElementById('driver-name').textContent = name ? `Driver: ${name}` : '';
+
+  // Avatar — logo or initials
+  const avatarEl = document.getElementById('driver-avatar');
+  if (driverData?.logoUrl && !avatarEl.querySelector('img')) {
+    const img = document.createElement('img');
+    img.src = driverData.logoUrl;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = () => { avatarEl.removeChild(img); avatarEl.textContent = initials(biz); };
+    avatarEl.textContent = '';
+    avatarEl.appendChild(img);
+  } else if (!driverData?.logoUrl) {
+    avatarEl.textContent = initials(biz);
+  }
+
+  // Trip detail rows
+  const rows = [
+    r.date            ? ['📅', 'Date',       fmtDate(r.date)]                    : null,
+    r.time            ? ['⏰', 'Time',       fmtTime(r.time)]                    : null,
+    r.pickup          ? ['📍', 'Pickup',     r.pickup]                           : null,
+    r.dropoff         ? ['🏁', 'Drop-off',   r.dropoff]                          : null,
+    r.passengers      ? ['👥', 'Passengers', r.passengers]                       : null,
+    r.luggage         ? ['🧳', 'Luggage',    r.luggage]                          : null,
+    r.selectedService ? ['🚘', 'Service',    r.selectedService]                  : null,
+    r.distanceMiles   ? ['📏', 'Distance',   `${r.distanceMiles.toFixed(1)} mi`] : null,
+  ].filter(Boolean);
+
+  document.getElementById('trip-details').innerHTML = rows.map(([icon, label, val]) => `
+    <div class="detail-row">
+      <span style="font-size:14px;width:20px;flex-shrink:0">${icon}</span>
+      <span style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:76px;flex-shrink:0">${label}</span>
+      <span style="font-size:13px;color:#0f172a;font-weight:500">${escHtml(String(val))}</span>
+    </div>`).join('');
+
+  // Confirmed fare highlight
+  const fareEl = document.getElementById('fare-highlight');
+  if (r.confirmedFare > 0) {
+    document.getElementById('fare-highlight-amt').textContent = `$${r.confirmedFare}`;
+    fareEl.style.display = 'block';
+  } else {
+    fareEl.style.display = 'none';
+  }
+
+  // WhatsApp contact button
+  const contactWrap = document.getElementById('contact-wrap');
+  if (driverData?.phone) {
+    const label = r.status === 'confirmed' ? `Message ${biz} on WhatsApp` : 'Message Driver on WhatsApp';
+    contactWrap.innerHTML = `
+      <button onclick="contactDriver()"
+        style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#25D366;color:#fff;padding:13px 20px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.3)">
+        <svg style="width:18px;height:18px;flex-shrink:0" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        ${escHtml(label)}
+      </button>`;
+  }
+
+  // Book again link
+  if (r.driverId) {
+    document.getElementById('book-again-link').href  = bookingUrl(r.driverId);
+    document.getElementById('book-again-wrap').style.display = 'block';
+  }
+}
+
+function contactDriver() {
+  if (!driverData?.phone) return;
+  openWhatsApp(driverData.phone, "Hi, I'm following up on my ride request. Can you confirm?");
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+</script>
+</body>
+</html>
